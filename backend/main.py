@@ -25,6 +25,12 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v2.5.0")
     logger.info(f"Environment: {settings.APP_ENV}")
     logger.info(f"API Documentation: http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}/docs")
+    try:
+        from app.core.database import init_db
+        init_db()
+        logger.info("Database schemas and pgvector initialized successfully.")
+    except Exception as e:
+        logger.error(f"Database schema initialization warning: {e}")
     yield
     # Shutdown sequence
     logger.info("Gracefully shutting down AI Sales & CRM OS")

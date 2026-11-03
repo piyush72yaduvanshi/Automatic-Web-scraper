@@ -164,10 +164,14 @@ class Settings(BaseSettings):
     LINKEDIN_CLIENT_SECRET: Optional[str] = None
     LINKEDIN_ACCESS_TOKEN: Optional[str] = None
     LINKEDIN_ORG_ID: Optional[str] = None
+    LINKEDIN_PERSON_URN: Optional[str] = None
+    LINKEDIN_ORGANIZATION_URN: Optional[str] = None
 
     # Security
     SECRET_KEY: str = "development-secret-key-change-in-production"
     API_KEY: Optional[str] = None
+    AUTH_ENABLED: bool = False
+    ADMIN_API_KEY: str = "dev-admin-api-key"
     ALLOWED_ORIGINS: List[str] = Field(
         default=["http://localhost:5173", "http://localhost:3000"]
     )

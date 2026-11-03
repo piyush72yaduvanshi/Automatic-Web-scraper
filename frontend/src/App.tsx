@@ -92,6 +92,7 @@ function App() {
 
             {/* Marketing & SEO */}
             <Route path="content" element={<ContentSocialView />} />
+            <Route path="social" element={<ContentSocialView />} />
             <Route path="seo" element={<SEOView />} />
             <Route path="research" element={<ResearchIntel />} />
 

@@ -15,6 +15,11 @@ import {
   Mail,
   Server,
   Key,
+  Share2,
+  Instagram,
+  Facebook,
+  Twitter,
+  Linkedin,
 } from 'lucide-react';
 
 const IntegrationsView: React.FC = () => {
@@ -95,7 +100,12 @@ const IntegrationsView: React.FC = () => {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = (category: string, name?: string) => {
+    if (name === 'instagram') return <Instagram className="w-4 h-4 text-pink-400" />;
+    if (name === 'facebook') return <Facebook className="w-4 h-4 text-blue-500" />;
+    if (name === 'twitter') return <Twitter className="w-4 h-4 text-sky-400" />;
+    if (name === 'linkedin') return <Linkedin className="w-4 h-4 text-blue-400" />;
+    if (category.includes('Social')) return <Share2 className="w-4 h-4 text-pink-400" />;
     if (category.includes('AI')) return <Bot className="w-4 h-4 text-indigo-400" />;
     if (category.includes('Discovery')) return <Globe className="w-4 h-4 text-blue-400" />;
     if (category.includes('Enrichment')) return <Key className="w-4 h-4 text-cyan-400" />;
@@ -212,7 +222,7 @@ const IntegrationsView: React.FC = () => {
               >
                 <div className="flex items-start gap-3.5">
                   <div className="p-2 rounded-xl bg-[#131B2E] border border-slate-700/60 mt-0.5">
-                    {getCategoryIcon(item.category)}
+                    {getCategoryIcon(item.category, item.name)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2.5 flex-wrap">

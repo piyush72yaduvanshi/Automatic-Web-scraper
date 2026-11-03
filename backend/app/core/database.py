@@ -61,6 +61,7 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     """Initialize database tables and pgvector extension."""
+    import app.models  # Ensure all model tables are registered in Base.metadata
     if not db_url.startswith("sqlite"):
         try:
             with engine.connect() as conn:

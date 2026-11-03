@@ -178,7 +178,7 @@ def verify_api_key(
     Authenticate requests using X-API-Key header or Bearer token.
     If AUTH_ENABLED is False (development/testing default), allows request through.
     """
-    if not settings.AUTH_ENABLED:
+    if not getattr(settings, "AUTH_ENABLED", False):
         return True
 
     provided_key = None

@@ -34,6 +34,7 @@ class IntegrationCategory(str, Enum):
     ENRICHMENT = "Web Enrichment"
     COMMUNICATION = "Outreach & Messaging"
     INFRASTRUCTURE = "Core Infrastructure"
+    SOCIAL = "Social Media Automation"
 
 
 class ProviderHealthService:
@@ -111,6 +112,10 @@ class ProviderHealthService:
         cls._init_provider("redis", "Redis Cache & Task Broker", IntegrationCategory.INFRASTRUCTURE, "High-speed caching and Celery task queue broker.")
         cls._init_provider("minio", "MinIO Object Storage", IntegrationCategory.INFRASTRUCTURE, "High-performance S3-compatible object storage for creatives, images, and lead exports.")
         cls._init_provider("celery", "Celery Background Worker", IntegrationCategory.INFRASTRUCTURE, "Distributed asynchronous task execution for bulk discovery & research.")
+        cls._init_provider("instagram", "Instagram (Meta Graph API)", IntegrationCategory.SOCIAL, "Automated image & carousel publishing and follower analytics via Meta Graph API.")
+        cls._init_provider("facebook", "Facebook Pages API", IntegrationCategory.SOCIAL, "Multi-page content scheduling, marketing posts, and page analytics.")
+        cls._init_provider("twitter", "X (Twitter) Developer API v2", IntegrationCategory.SOCIAL, "Automated tweet threads, polls, and engagement tracking.")
+        cls._init_provider("linkedin", "LinkedIn Marketing API", IntegrationCategory.SOCIAL, "Personal profile updates and corporate organization page publishing.")
 
         # 1. Heuristic NLP is always healthy and active
         cls._runtime_state["heuristic_nlp"]["is_configured"] = True
@@ -268,6 +273,54 @@ class ProviderHealthService:
             cls._runtime_state["celery"]["status"] = IntegrationStatus.DEGRADED.value
             cls._runtime_state["celery"]["user_message"] = "Celery worker offline. Running in-process background executor."
 
+        # 14. Instagram status
+        has_instagram = bool(settings.INSTAGRAM_ACCESS_TOKEN and settings.INSTAGRAM_BUSINESS_ACCOUNT_ID)
+        if not has_instagram:
+            cls._runtime_state["instagram"]["is_configured"] = False
+            cls._runtime_state["instagram"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+            cls._runtime_state["instagram"]["user_message"] = "Instagram Graph API credentials not configured in .env."
+        else:
+            cls._runtime_state["instagram"]["is_configured"] = True
+            if cls._runtime_state["instagram"]["status"] != IntegrationStatus.DISABLED.value:
+                cls._runtime_state["instagram"]["status"] = IntegrationStatus.HEALTHY.value
+                cls._runtime_state["instagram"]["user_message"] = "Instagram Graph API configured for automated publishing."
+
+        # 15. Facebook status
+        has_facebook = bool(settings.FACEBOOK_PAGE_ACCESS_TOKEN and settings.FACEBOOK_PAGE_ID)
+        if not has_facebook:
+            cls._runtime_state["facebook"]["is_configured"] = False
+            cls._runtime_state["facebook"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+            cls._runtime_state["facebook"]["user_message"] = "Facebook Page credentials not configured in .env."
+        else:
+            cls._runtime_state["facebook"]["is_configured"] = True
+            if cls._runtime_state["facebook"]["status"] != IntegrationStatus.DISABLED.value:
+                cls._runtime_state["facebook"]["status"] = IntegrationStatus.HEALTHY.value
+                cls._runtime_state["facebook"]["user_message"] = "Facebook Pages API configured for scheduled publishing."
+
+        # 16. Twitter / X status
+        has_twitter = bool(settings.TWITTER_BEARER_TOKEN or (settings.TWITTER_API_KEY and settings.TWITTER_ACCESS_TOKEN))
+        if not has_twitter:
+            cls._runtime_state["twitter"]["is_configured"] = False
+            cls._runtime_state["twitter"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+            cls._runtime_state["twitter"]["user_message"] = "X (Twitter) Developer credentials not configured in .env."
+        else:
+            cls._runtime_state["twitter"]["is_configured"] = True
+            if cls._runtime_state["twitter"]["status"] != IntegrationStatus.DISABLED.value:
+                cls._runtime_state["twitter"]["status"] = IntegrationStatus.HEALTHY.value
+                cls._runtime_state["twitter"]["user_message"] = "X Developer API v2 configured for tweet automation."
+
+        # 17. LinkedIn status
+        has_linkedin = bool(settings.LINKEDIN_ACCESS_TOKEN and (settings.LINKEDIN_PERSON_URN or settings.LINKEDIN_ORGANIZATION_URN or settings.LINKEDIN_CLIENT_ID))
+        if not has_linkedin:
+            cls._runtime_state["linkedin"]["is_configured"] = False
+            cls._runtime_state["linkedin"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+            cls._runtime_state["linkedin"]["user_message"] = "LinkedIn API credentials not configured in .env."
+        else:
+            cls._runtime_state["linkedin"]["is_configured"] = True
+            if cls._runtime_state["linkedin"]["status"] != IntegrationStatus.DISABLED.value:
+                cls._runtime_state["linkedin"]["status"] = IntegrationStatus.HEALTHY.value
+                cls._runtime_state["linkedin"]["user_message"] = "LinkedIn Marketing API configured for personal & organization publishing."
+
         # Respect manual disabled flags
         for name in cls._disabled_providers:
             if name in cls._runtime_state:
@@ -365,6 +418,50 @@ class ProviderHealthService:
 
             elif provider_name == "heuristic_nlp":
                 return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": "Heuristic NLP engine operational."}
+
+            elif provider_name == "instagram":
+                from app.providers.social.instagram_provider import InstagramProvider
+                res = await InstagramProvider.test_connection()
+                if res.get("configured") and res.get("status") == "ACTIVE":
+                    cls.record_success("instagram")
+                    return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": f"Instagram connected as {res.get('account_handle', '')} ({res.get('followers_count', 0)} followers)."}
+                else:
+                    err = res.get("error") or res.get("message", "Instagram verification failed.")
+                    cls.record_failure("instagram", err, IntegrationStatus.INVALID_CREDENTIALS)
+                    return {"success": False, "status": IntegrationStatus.INVALID_CREDENTIALS.value, "message": err}
+
+            elif provider_name == "facebook":
+                from app.providers.social.facebook_provider import FacebookProvider
+                res = await FacebookProvider.test_connection()
+                if res.get("configured") and res.get("status") == "ACTIVE":
+                    cls.record_success("facebook")
+                    return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": f"Facebook Page connected as '{res.get('account_name', '')}'."}
+                else:
+                    err = res.get("error") or res.get("message", "Facebook Page verification failed.")
+                    cls.record_failure("facebook", err, IntegrationStatus.INVALID_CREDENTIALS)
+                    return {"success": False, "status": IntegrationStatus.INVALID_CREDENTIALS.value, "message": err}
+
+            elif provider_name == "twitter":
+                from app.providers.social.twitter_provider import TwitterProvider
+                res = await TwitterProvider.test_connection()
+                if res.get("configured") and res.get("status") == "ACTIVE":
+                    cls.record_success("twitter")
+                    return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": f"X (Twitter) connected as {res.get('account_handle', '')}."}
+                else:
+                    err = res.get("error") or res.get("message", "X (Twitter) verification failed.")
+                    cls.record_failure("twitter", err, IntegrationStatus.INVALID_CREDENTIALS)
+                    return {"success": False, "status": IntegrationStatus.INVALID_CREDENTIALS.value, "message": err}
+
+            elif provider_name == "linkedin":
+                from app.providers.social.linkedin_provider import LinkedInProvider
+                res = await LinkedInProvider.test_connection(is_organization=bool(settings.LINKEDIN_ORGANIZATION_URN))
+                if res.get("configured") and res.get("status") == "ACTIVE":
+                    cls.record_success("linkedin")
+                    return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": f"LinkedIn connected as '{res.get('account_name', '')}'."}
+                else:
+                    err = res.get("error") or res.get("message", "LinkedIn verification failed.")
+                    cls.record_failure("linkedin", err, IntegrationStatus.INVALID_CREDENTIALS)
+                    return {"success": False, "status": IntegrationStatus.INVALID_CREDENTIALS.value, "message": err}
 
             else:
                 return {"success": True, "status": provider_info["status"], "message": f"{provider_info['display_name']} configuration verified."}
