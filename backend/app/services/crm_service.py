@@ -4,7 +4,8 @@ import uuid
 import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from sqlalchemy.orm import Session
+from collections import defaultdict
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 
 from app.models.crm import (
@@ -263,7 +264,7 @@ class CRMService:
 
     @classmethod
     def get_kanban_board(cls, db: Session, pipeline_id: Optional[str] = None) -> Dict[str, Any]:
-        """Return deals grouped by pipeline stages for Kanban board view."""
+        """Return deals grouped by pipeline stages for Kanban board view using a single optimized query."""
         if pipeline_id:
             pipeline = db.query(Pipeline).filter(Pipeline.id == uuid.UUID(str(pipeline_id))).first()
         else:
@@ -272,9 +273,20 @@ class CRMService:
         if not pipeline:
             pipeline = cls.get_or_create_default_pipeline(db)
 
+        # Single batch query with joinedload to eliminate N+1 latency across stages & relations
+        all_deals = (
+            db.query(Deal)
+            .options(joinedload(Deal.company), joinedload(Deal.contact))
+            .filter(Deal.pipeline_id == pipeline.id, Deal.status == "open")
+            .all()
+        )
+        deals_by_stage = defaultdict(list)
+        for deal in all_deals:
+            deals_by_stage[deal.stage_id].append(deal)
+
         stages_data = []
-        for stage in pipeline.stages:
-            stage_deals = db.query(Deal).filter(Deal.stage_id == stage.id, Deal.status == "open").all()
+        for stage in sorted(pipeline.stages, key=lambda s: s.stage_order):
+            stage_deals = deals_by_stage.get(stage.id, [])
             total_value = sum(d.amount for d in stage_deals)
             stages_data.append({
                 "id": str(stage.id),

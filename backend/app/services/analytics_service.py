@@ -40,14 +40,20 @@ class AnalyticsService:
         total_phones = db.query(LeadContact).filter(LeadContact.contact_type == ContactType.PHONE).count()
         total_socials = db.query(LeadSocialProfile).count()
 
-        # Deals & Pipeline KPIs
-        deals = db.query(Deal).all()
-        active_deals = [d for d in deals if d.status == "open"]
-        won_deals = [d for d in deals if d.status == "won"]
-        lost_deals = [d for d in deals if d.status == "lost"]
-
-        pipeline_value = sum(d.amount for d in active_deals)
-        won_value = sum(d.amount for d in won_deals)
+        # Deals & Pipeline KPIs via SQL aggregation (O(1) memory, high-performance database execution)
+        deal_stats = (
+            db.query(
+                Deal.status,
+                func.count(Deal.id),
+                func.coalesce(func.sum(Deal.amount), 0.0),
+            )
+            .group_by(Deal.status)
+            .all()
+        )
+        deal_map = {row[0]: (int(row[1]), float(row[2])) for row in deal_stats}
+        active_deals_count, pipeline_value = deal_map.get("open", (0, 0.0))
+        won_deals_count, won_value = deal_map.get("won", (0, 0.0))
+        lost_deals_count, _ = deal_map.get("lost", (0, 0.0))
 
         # Tasks & Meetings
         pending_tasks = db.query(CRMTask).filter(CRMTask.status == "pending").count()
@@ -57,9 +63,12 @@ class AnalyticsService:
         pending_approvals = db.query(OutreachApproval).filter(OutreachApproval.status == "PENDING").count()
         approved_sent = db.query(OutreachApproval).filter(OutreachApproval.status == "SENT").count()
 
-        campaigns = db.query(OutreachCampaign).all()
-        total_sent = sum(c.sent_count for c in campaigns)
-        total_replies = sum(c.replied_count for c in campaigns)
+        campaign_totals = db.query(
+            func.coalesce(func.sum(OutreachCampaign.sent_count), 0),
+            func.coalesce(func.sum(OutreachCampaign.replied_count), 0)
+        ).first()
+        total_sent = int(campaign_totals[0]) if campaign_totals else 0
+        total_replies = int(campaign_totals[1]) if campaign_totals else 0
         reply_rate = f"{(total_replies / total_sent * 100):.1f}%" if total_sent > 0 else "0.0%"
 
         # AI Agent Telemetry
@@ -103,11 +112,11 @@ class AnalyticsService:
                 "by_city": leads_by_city,
             },
             "pipeline": {
-                "active_deals_count": len(active_deals),
+                "active_deals_count": active_deals_count,
                 "open_pipeline_value": pipeline_value,
-                "won_deals_count": len(won_deals),
+                "won_deals_count": won_deals_count,
                 "won_value": won_value,
-                "lost_deals_count": len(lost_deals),
+                "lost_deals_count": lost_deals_count,
             },
             "tasks_and_calendar": {
                 "pending_tasks": pending_tasks,

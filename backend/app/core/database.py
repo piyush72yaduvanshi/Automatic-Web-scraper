@@ -23,6 +23,7 @@ else:
         "pool_pre_ping": True,
         "pool_size": settings.DATABASE_POOL_SIZE,
         "max_overflow": settings.DATABASE_MAX_OVERFLOW,
+        "pool_recycle": getattr(settings, "DATABASE_POOL_RECYCLE", 3600),
     })
 
 # Create database engine with fallback handling
@@ -57,4 +58,3 @@ def get_db() -> Generator[Session, None, None]:
 def init_db() -> None:
     """Initialize database tables."""
     Base.metadata.create_all(bind=engine)
-

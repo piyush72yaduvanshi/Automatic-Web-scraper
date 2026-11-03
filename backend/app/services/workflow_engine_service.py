@@ -9,7 +9,7 @@ import json
 import uuid
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.workflow import WorkflowDefinition, WorkflowExecution, WorkflowEvent
 from app.models.orchestration import AuditLog
@@ -180,9 +180,18 @@ class WorkflowEngineService:
         steps = json.loads(w_def.steps_json) if w_def.steps_json else []
         step_results = {}
         current_step_idx = 0
+        max_step_executions = max(len(steps) * 4, 60)
+        executed_step_count = 0
 
         try:
             while current_step_idx < len(steps):
+                executed_step_count += 1
+                if executed_step_count > max_step_executions:
+                    raise RuntimeError(
+                        f"Workflow step limit exceeded ({max_step_executions} iterations). "
+                        f"Execution terminated to prevent infinite loop."
+                    )
+
                 step = steps[current_step_idx]
                 step_id = step.get("step_id", f"step_{current_step_idx + 1}")
                 action_type = step.get("action_type")
@@ -371,7 +380,7 @@ class WorkflowEngineService:
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """Query workflow execution history."""
-        q = db.query(WorkflowExecution)
+        q = db.query(WorkflowExecution).options(joinedload(WorkflowExecution.definition))
         if workflow_id:
             q = q.filter(WorkflowExecution.workflow_id == uuid.UUID(str(workflow_id)))
         if status:

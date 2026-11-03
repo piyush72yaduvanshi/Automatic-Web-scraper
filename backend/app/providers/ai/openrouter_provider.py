@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 import httpx
 
 from app.core.config import settings
-from app.providers.ai.base import BaseAIProvider
+from app.providers.ai.base import BaseAIProvider, clean_and_parse_json
 from app.services.provider_health_service import ProviderHealthService, IntegrationStatus
 
 logger = logging.getLogger(__name__)
@@ -96,15 +96,10 @@ class OpenRouterAIProvider(BaseAIProvider):
         )
 
         if text_out:
-            clean = text_out.strip()
-            if clean.startswith("```json"):
-                clean = clean[7:]
-            if clean.endswith("```"):
-                clean = clean[:-3]
-            try:
-                return json.loads(clean.strip())
-            except Exception as e:
-                logger.warning(f"Failed to parse JSON from OpenRouter output: {e}")
+            parsed = clean_and_parse_json(text_out)
+            if parsed is not None:
+                return parsed
+            logger.warning("Failed to parse valid structured JSON from OpenRouter output")
         return None
 
     async def generate_embeddings(self, text: str) -> Optional[List[float]]:

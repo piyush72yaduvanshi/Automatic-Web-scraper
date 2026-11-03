@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 import httpx
 
 from app.core.config import settings
-from app.providers.ai.base import BaseAIProvider
+from app.providers.ai.base import BaseAIProvider, clean_and_parse_json
 from app.services.provider_health_service import ProviderHealthService, IntegrationStatus
 
 logger = logging.getLogger(__name__)
@@ -105,13 +105,12 @@ class GeminiAIProvider(BaseAIProvider):
                     if candidates and "content" in candidates[0]:
                         parts = candidates[0]["content"].get("parts", [])
                         if parts:
-                            text_val = parts[0].get("text", "").strip()
-                            if text_val.startswith("```json"):
-                                text_val = text_val[7:]
-                            if text_val.endswith("```"):
-                                text_val = text_val[:-3]
-                            ProviderHealthService.record_success(self.provider_name)
-                            return json.loads(text_val.strip())
+                            text_val = parts[0].get("text", "")
+                            parsed = clean_and_parse_json(text_val)
+                            if parsed is not None:
+                                ProviderHealthService.record_success(self.provider_name)
+                                return parsed
+                            ProviderHealthService.record_failure(self.provider_name, "Invalid JSON structure in response")
                 elif resp.status_code == 429:
                     ProviderHealthService.record_failure(self.provider_name, "Rate limit reached", IntegrationStatus.RATE_LIMITED)
                 else:

@@ -12,7 +12,7 @@ from typing import Dict, Any, List
 import json
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.workflow import WorkflowExecution
 from app.models.deliverability import EmailEvent
@@ -33,9 +33,14 @@ class ExceptionQueueService:
         exceptions = []
 
         # 1. Failed Workflow Executions
-        failed_workflows = db.query(WorkflowExecution).filter(
-            WorkflowExecution.status == "FAILED"
-        ).order_by(WorkflowExecution.created_at.desc()).limit(15).all()
+        failed_workflows = (
+            db.query(WorkflowExecution)
+            .options(joinedload(WorkflowExecution.definition))
+            .filter(WorkflowExecution.status == "FAILED")
+            .order_by(WorkflowExecution.created_at.desc())
+            .limit(15)
+            .all()
+        )
 
         for w in failed_workflows:
             exceptions.append({

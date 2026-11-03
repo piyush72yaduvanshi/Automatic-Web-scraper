@@ -1,6 +1,6 @@
 """Application configuration using Pydantic settings."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import Field, PostgresDsn, RedisDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     # Application
-    APP_NAME: str = "CRM Lead Discovery"
+    APP_NAME: str = "AI Sales & CRM Operating System"
     APP_ENV: str = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
@@ -26,15 +26,16 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:5173"
 
-    # Database
-    DATABASE_URL: PostgresDsn = Field(
+    # Database (Dialect-agnostic: supports postgresql+psycopg, postgresql+asyncpg, sqlite)
+    DATABASE_URL: Union[PostgresDsn, str] = Field(
         default="postgresql+psycopg://postgres:postgres@localhost:5432/crm_leads"
     )
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
+    DATABASE_POOL_RECYCLE: int = 3600
 
     # Redis
-    REDIS_URL: RedisDsn = Field(default="redis://localhost:6379/0")
+    REDIS_URL: Union[RedisDsn, str] = Field(default="redis://localhost:6379/0")
 
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"

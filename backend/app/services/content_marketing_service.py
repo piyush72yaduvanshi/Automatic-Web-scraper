@@ -10,7 +10,7 @@ import json
 import uuid
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.marketing import ContentItem, ContentCalendarEntry
 from app.providers.ai.router import ai_router
@@ -158,8 +158,13 @@ Provide structured JSON with draft copy for each requested platform.
 
     @classmethod
     def list_calendar_entries(cls, db: Session) -> List[Dict[str, Any]]:
-        """List upcoming scheduled calendar entries."""
-        entries = db.query(ContentCalendarEntry).order_by(ContentCalendarEntry.scheduled_for.asc()).all()
+        """List upcoming scheduled calendar entries with eager-loaded content items."""
+        entries = (
+            db.query(ContentCalendarEntry)
+            .options(joinedload(ContentCalendarEntry.content_item))
+            .order_by(ContentCalendarEntry.scheduled_for.asc())
+            .all()
+        )
         return [
             {
                 "id": str(e.id),

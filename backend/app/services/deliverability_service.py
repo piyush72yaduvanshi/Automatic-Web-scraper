@@ -81,9 +81,14 @@ class DeliverabilityService:
             "raw_records": {},
         }
 
+        # Dedicated resolver instance with strict non-blocking timeouts (4s max lifetime)
+        resolver = dns.resolver.Resolver()
+        resolver.timeout = 2.0
+        resolver.lifetime = 4.0
+
         # 1. MX Record Check
         try:
-            mx_answers = dns.resolver.resolve(clean_domain, "MX")
+            mx_answers = resolver.resolve(clean_domain, "MX")
             mx_hosts = [str(r.exchange) for r in mx_answers]
             dns_results["raw_records"]["mx"] = mx_hosts
             dns_results["mx_status"] = "VERIFIED" if mx_hosts else "FAILED"
@@ -95,7 +100,7 @@ class DeliverabilityService:
 
         # 2. SPF Record Check (TXT on root domain)
         try:
-            txt_answers = dns.resolver.resolve(clean_domain, "TXT")
+            txt_answers = resolver.resolve(clean_domain, "TXT")
             spf_records = [str(r) for r in txt_answers if "v=spf1" in str(r).lower()]
             dns_results["raw_records"]["spf"] = spf_records
             dns_results["spf_status"] = "VERIFIED" if spf_records else "FAILED"
@@ -107,7 +112,7 @@ class DeliverabilityService:
 
         # 3. DMARC Record Check (TXT on _dmarc.domain)
         try:
-            dmarc_answers = dns.resolver.resolve(f"_dmarc.{clean_domain}", "TXT")
+            dmarc_answers = resolver.resolve(f"_dmarc.{clean_domain}", "TXT")
             dmarc_records = [str(r) for r in dmarc_answers if "v=dmarc1" in str(r).lower()]
             dns_results["raw_records"]["dmarc"] = dmarc_records
             dns_results["dmarc_status"] = "VERIFIED" if dmarc_records else "FAILED"
@@ -120,7 +125,7 @@ class DeliverabilityService:
         # 4. DKIM Record Check (default selectors: google, default, k1)
         for selector in ["google", "default", "k1"]:
             try:
-                dkim_answers = dns.resolver.resolve(f"{selector}._domainkey.{clean_domain}", "TXT")
+                dkim_answers = resolver.resolve(f"{selector}._domainkey.{clean_domain}", "TXT")
                 dkim_records = [str(r) for r in dkim_answers if "v=dkim1" in str(r).lower() or "k=rsa" in str(r).lower()]
                 if dkim_records:
                     dns_results["dkim_status"] = "VERIFIED"
