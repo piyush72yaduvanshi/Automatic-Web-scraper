@@ -7,9 +7,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
-  color: #111827;
-  background-color: #f9fafb;
+  color-scheme: dark;
+  color: #f1f5f9;
+  background-color: #0b0f19;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,8 +22,9 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
-  color: #111827;
-  background-color: #f9fafb;
+  color: #f1f5f9;
+  background-color: #0b0f19;
+  overflow-x: hidden;
 }
 
 #root {
@@ -31,11 +32,56 @@ body {
   min-height: 100vh;
 }
 
-/* Ensure inputs, selects, and textareas always have dark text on light backgrounds */
-input, select, textarea {
-  color: #111827 !important;
+/* Custom sleek scrollbar for entire app */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-input::placeholder, textarea::placeholder {
-  color: #9ca3af !important;
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glassmorphism and UI Enhancement Utility Classes */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+}
+
+/* Smooth transitions */
+* {
+  border-color: rgba(255, 255, 255, 0.08);
 }

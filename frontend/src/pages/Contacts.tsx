@@ -11,6 +11,7 @@ import {
   Building2,
   Linkedin,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 const Contacts: React.FC = () => {
@@ -53,76 +54,97 @@ const Contacts: React.FC = () => {
       setEmail('');
       setPhone('');
       setJobTitle('');
+      setIsDecisionMaker(false);
+      setCompanyId('');
     },
   });
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Contact2 className="w-6 h-6 text-blue-600" />
-            Decision Makers & Contacts
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            People directory with reachability scores, decision-maker status, and company affiliations.
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <Contact2 className="w-5 h-5" />
+              </span>
+              Decision Makers & Contacts
+            </h1>
+            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              {contacts?.length || 0} Contacts
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1.5">
+            Executive directory with reachability scores, decision-maker status, and company affiliations.
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Contact
         </button>
       </div>
 
-      {/* Search */}
+      {/* Search Bar */}
       <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
         <input
           type="text"
           placeholder="Search by name, email, or role..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2.5 bg-[#0E1424] border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
         />
       </div>
 
       {/* Contacts List */}
-      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-[#0E1424] border border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading contacts...</div>
+          <div className="p-16 text-center text-sm text-slate-400 flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+            <span>Loading contacts...</span>
+          </div>
         ) : contacts?.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-xs">
+          <div className="p-16 text-center text-slate-500 text-xs">
             No contacts recorded yet. Add one above or convert qualified leads into contacts.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800/80">
             {contacts?.map((c) => (
-              <div key={c.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/60">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">
-                      {c.first_name} {c.last_name}
-                    </h3>
-                    {c.is_decision_maker && (
-                      <span className="text-[10px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3" /> Decision Maker
-                      </span>
-                    )}
-                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                      {c.reachability_status}
-                    </span>
+              <div
+                key={c.id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#131B2E]/60 transition-colors"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300">
+                    {c.first_name?.[0] || ''}
+                    {c.last_name?.[0] || ''}
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                    {c.job_title && <span className="font-medium text-slate-700">{c.job_title}</span>}
-                    {c.company_name && (
-                      <span className="flex items-center gap-1 text-slate-500">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400" /> {c.company_name}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">
+                        {c.first_name} {c.last_name}
+                      </h3>
+                      {c.is_decision_maker && (
+                        <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3 text-amber-400" /> Decision Maker
+                        </span>
+                      )}
+                      <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700/60 px-2 py-0.5 rounded-md">
+                        {c.reachability_status || 'Verified'}
                       </span>
-                    )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                      {c.job_title && <span className="font-medium text-slate-300">{c.job_title}</span>}
+                      {c.company_name && (
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <Building2 className="w-3.5 h-3.5 text-slate-500" /> {c.company_name}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -130,13 +152,13 @@ const Contacts: React.FC = () => {
                   {c.email && (
                     <a
                       href={`mailto:${c.email}`}
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                      className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg transition-colors"
                     >
                       <Mail className="w-3.5 h-3.5" /> {c.email}
                     </a>
                   )}
                   {c.phone && (
-                    <span className="flex items-center gap-1 text-slate-600">
+                    <span className="flex items-center gap-1.5 text-slate-300 bg-slate-800/80 border border-slate-700/60 px-2.5 py-1 rounded-lg">
                       <Phone className="w-3.5 h-3.5 text-slate-400" /> {c.phone}
                     </span>
                   )}
@@ -145,7 +167,7 @@ const Contacts: React.FC = () => {
                       href={c.linkedin_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-slate-400 hover:text-blue-600"
+                      className="p-1.5 text-slate-400 hover:text-indigo-400 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors"
                     >
                       <Linkedin className="w-4 h-4" />
                     </a>
@@ -159,64 +181,78 @@ const Contacts: React.FC = () => {
 
       {/* Add Contact Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Add New Contact</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0E1424] border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 text-white">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                Add New Contact
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">First Name</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">First Name *</label>
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border rounded text-xs"
+                    className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Last Name</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Last Name</label>
                   <input
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border rounded text-xs"
+                    className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Email</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Email</label>
                 <input
                   type="email"
+                  placeholder="contact@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs"
+                  className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Phone</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Phone</label>
                 <input
                   type="text"
+                  placeholder="+1 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs"
+                  className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Job Title</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Job Title</label>
                 <input
                   type="text"
-                  placeholder="e.g. Chief Executive Officer, CTO, Partner"
+                  placeholder="e.g. Chief Executive Officer, VP Sales, Founder"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs"
+                  className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Company</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Associated Company</label>
                 <select
                   value={companyId}
                   onChange={(e) => setCompanyId(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs"
+                  className="w-full px-3 py-2 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">Select company (optional)...</option>
                   {companies?.map((cmp) => (
@@ -226,21 +262,25 @@ const Contacts: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-1.5">
                 <input
                   type="checkbox"
                   id="dm-check"
                   checked={isDecisionMaker}
                   onChange={(e) => setIsDecisionMaker(e.target.checked)}
-                  className="rounded text-blue-600"
+                  className="w-4 h-4 rounded border-slate-700 bg-[#131B2E] text-indigo-600 focus:ring-indigo-500"
                 />
-                <label htmlFor="dm-check" className="text-xs text-slate-700 font-medium">
-                  Verified Decision Maker (has budget authority)
+                <label htmlFor="dm-check" className="text-xs text-slate-300 font-medium cursor-pointer">
+                  Verified Decision Maker (has budget/signing authority)
                 </label>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <button onClick={() => setShowAddModal(false)} className="px-3 py-1.5 border rounded text-xs text-slate-700">
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-slate-700 rounded-xl text-xs text-slate-300 hover:bg-slate-800 transition-colors"
+              >
                 Cancel
               </button>
               <button
@@ -257,9 +297,9 @@ const Contacts: React.FC = () => {
                   })
                 }
                 disabled={!firstName || createMutation.isPending}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700"
+                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition-all disabled:opacity-50"
               >
-                Save Contact
+                {createMutation.isPending ? 'Saving...' : 'Save Contact'}
               </button>
             </div>
           </div>

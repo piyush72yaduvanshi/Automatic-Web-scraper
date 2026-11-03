@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # MinIO Object Storage (Images, Creatives, Lead Collateral & Export Storage)
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin_secret_key"
+    MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET_NAME: str = "crm-assets"
     MINIO_SECURE: bool = False
     MINIO_PUBLIC_URL: Optional[str] = "http://localhost:9000"
