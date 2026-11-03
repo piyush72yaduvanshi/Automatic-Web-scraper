@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 from app.models.guid import GUID
@@ -41,6 +42,7 @@ class KnowledgeDocument(Base):
     # COMPANY_PROFILE, SERVICE_OFFERING, ICP, CASE_STUDY, EMAIL_TEMPLATE, OBJECTION_HANDLING, PLAYBOOK
     content = Column(Text, nullable=False)
     file_type = Column(String(50), default="text")
+    file_url = Column(String(500), nullable=True)  # MinIO object storage URL for attachments/assets
     metadata_json = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -51,7 +53,7 @@ class KnowledgeDocument(Base):
 
 
 class KnowledgeChunk(Base):
-    """Text chunk with embedding vector for RAG semantic search."""
+    """Text chunk with embedding vector for pgvector RAG semantic search."""
 
     __tablename__ = "knowledge_chunks"
 
@@ -59,7 +61,8 @@ class KnowledgeChunk(Base):
     document_id = Column(GUID(), ForeignKey("knowledge_documents.id", ondelete="CASCADE"), nullable=False, index=True)
     chunk_index = Column(Integer, default=0)
     chunk_text = Column(Text, nullable=False)
-    embedding_json = Column(Text, nullable=True)  # Serialized float vector [x1, x2, ...]
+    embedding_vector = Column(Vector(768), nullable=True)  # Native pgvector 768-dim column
+    embedding_json = Column(Text, nullable=True)  # Serialized float vector [x1, x2, ...] fallback
     token_count = Column(Integer, default=0)
 
     # Relationships

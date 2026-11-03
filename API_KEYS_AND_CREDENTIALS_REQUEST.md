@@ -282,6 +282,18 @@ INSTAGRAM_BUSINESS_ACCOUNT_ID=
 # --- Facebook Pages Graph API (P3) ---
 FACEBOOK_PAGE_ACCESS_TOKEN=
 FACEBOOK_PAGE_ID=
+
+# --- MinIO S3-Compatible Object Storage (Docker Image: minio/minio) ---
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin_secret_key
+MINIO_BUCKET_NAME=crm-assets
+MINIO_SECURE=false
+MINIO_PUBLIC_URL=http://localhost:9000
+
+# --- PostgreSQL with pgvector Vector DB (Docker Image: pgvector/pgvector:pg16) ---
+PGVECTOR_ENABLED=true
+VECTOR_DIMENSION=768
 ```
 
 ---

@@ -25,6 +25,7 @@ from app.api.v1 import (
     reports,
     exceptions,
     social,
+    storage,
 )
 
 api_router = APIRouter()
@@ -52,3 +53,4 @@ api_router.include_router(meetings.router)
 api_router.include_router(reports.router)
 api_router.include_router(exceptions.router)
 api_router.include_router(social.router)
+api_router.include_router(storage.router)

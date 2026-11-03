@@ -37,6 +37,18 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: Union[RedisDsn, str] = Field(default="redis://localhost:6379/0")
 
+    # MinIO Object Storage (Images, Creatives, Lead Collateral & Export Storage)
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin_secret_key"
+    MINIO_BUCKET_NAME: str = "crm-assets"
+    MINIO_SECURE: bool = False
+    MINIO_PUBLIC_URL: Optional[str] = "http://localhost:9000"
+
+    # pgvector Vector Database
+    PGVECTOR_ENABLED: bool = True
+    VECTOR_DIMENSION: int = 768
+
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"

@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database with pgvector extension for high-performance Vector RAG
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: crm_leads_postgres
     environment:
       POSTGRES_USER: postgres
@@ -41,6 +41,29 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    restart: unless-stopped
+
+  # MinIO High-Performance S3-Compatible Object Storage for Images, Creatives, and Collateral
+  minio:
+    image: minio/minio:RELEASE.2024-03-05T04-48-44Z
+    container_name: crm_leads_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin_secret_key}
+    ports:
+      - "127.0.0.1:9000:9000"  # S3 Object Storage API
+      - "127.0.0.1:9001:9001"  # MinIO Web Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - crm-lead-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # Database Migration Service
@@ -98,11 +121,21 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/crm_leads
       DATABASE_POOL_SIZE: 20
       DATABASE_MAX_OVERFLOW: 10
+      PGVECTOR_ENABLED: "true"
+      VECTOR_DIMENSION: 768
       
       # Redis - Use Docker service name
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      # MinIO Object Storage
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin_secret_key}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-crm-assets}
+      MINIO_SECURE: "false"
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
       
       # AI Providers & Integrations (set in .env file)
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -170,6 +203,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - crm-lead-network
     healthcheck:
@@ -200,6 +235,16 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      # MinIO Object Storage
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin_secret_key}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-crm-assets}
+      MINIO_SECURE: "false"
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
+      PGVECTOR_ENABLED: "true"
+      VECTOR_DIMENSION: 768
       
       # Provider API Keys
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
@@ -221,6 +266,8 @@ services:
       redis:
         condition: service_healthy
       backend:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - crm-lead-network
@@ -257,3 +304,5 @@ volumes:
     name: crm_leads_postgres_data
   redis_data:
     name: crm_leads_redis_data
+  minio_data:
+    name: crm_leads_minio_data

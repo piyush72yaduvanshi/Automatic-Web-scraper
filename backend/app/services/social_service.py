@@ -252,17 +252,33 @@ Creative Brief for each platform must specify:
             hash_input = f"{p_upper}:{caption[:120]}:{today_str}"
             content_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
-            # Default sample media asset URL matching creative brief
-            sample_media = [
-                f"https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&auto=format&fit=crop&q=80"
-            ]
+            # Generate platform-tailored creative banner and persist in MinIO
+            from app.services.storage_service import MinIOStorageService
+            creative_media = []
+            try:
+                overlay_text = brief.get("text_overlay") or brief.get("headline") or caption[:70]
+                creative_res = MinIOStorageService.generate_and_store_creative_image(
+                    title=topic,
+                    text_overlay=overlay_text,
+                    platform=p_upper,
+                    style=brief.get("visual_style", "modern_gradient"),
+                )
+                if creative_res.get("image_url"):
+                    creative_media.append(creative_res["image_url"])
+            except Exception as ce:
+                logger.debug(f"MinIO creative banner generation note: {ce}")
+
+            if not creative_media:
+                creative_media = [
+                    f"https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&auto=format&fit=crop&q=80"
+                ]
 
             post = SocialPost(
                 account_id=account_id,
                 platform=p_upper,
                 caption=caption,
                 hashtags_json=json.dumps(hashtags),
-                media_urls_json=json.dumps(sample_media),
+                media_urls_json=json.dumps(creative_media),
                 creative_brief_json=json.dumps(brief),
                 automation_mode=automation_mode,
                 status=status_for_mode,

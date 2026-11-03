@@ -2,7 +2,7 @@
 
 import logging
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 from app.core.config import settings
@@ -56,5 +56,14 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables and pgvector extension."""
+    if not db_url.startswith("sqlite"):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+                conn.commit()
+                logger.info("pgvector extension initialized successfully in PostgreSQL.")
+        except Exception as e:
+            logger.warning(f"Could not enable pgvector extension on database engine: {e}")
+
     Base.metadata.create_all(bind=engine)
