@@ -7,20 +7,26 @@ import re
 from app.providers.discovery.base import BaseDiscoveryProvider
 from app.providers.discovery.serpapi_provider import SerpApiProvider
 from app.providers.discovery.apify_provider import ApifyMapsProvider
+from app.providers.discovery.google_places_provider import GooglePlacesProvider
 
 
 class MultiSourceDiscoveryOrchestrator(BaseDiscoveryProvider):
     """
-    Coordinates multi-source discovery across SerpAPI, Apify, and Google Maps.
+    Coordinates multi-source discovery across Google Places API, SerpAPI, and Apify.
     """
 
     def __init__(self):
         self.serpapi_provider = SerpApiProvider()
         self.apify_provider = ApifyMapsProvider()
+        self.google_places_provider = GooglePlacesProvider()
 
     def is_configured(self) -> bool:
         """Check if at least one discovery provider is configured."""
-        return self.serpapi_provider.is_configured() or self.apify_provider.is_configured()
+        return (
+            self.google_places_provider.is_configured()
+            or self.serpapi_provider.is_configured()
+            or self.apify_provider.is_configured()
+        )
 
     def get_name(self) -> str:
         """Get provider name."""
@@ -39,19 +45,31 @@ class MultiSourceDiscoveryOrchestrator(BaseDiscoveryProvider):
         """
         provider_name = (preferred_provider or "serpapi").lower()
 
-        # 1. SerpAPI only (fast default)
+        # 1. Direct Official Google Places API
+        if provider_name in ["google_places", "google_maps", "places"] and self.google_places_provider.is_configured():
+            return await self.google_places_provider.discover_businesses(query, location, radius_km, limit)
+
+        # 2. SerpAPI only (fast default)
         if provider_name == "serpapi" and self.serpapi_provider.is_configured():
             return await self.serpapi_provider.discover_businesses(query, location, radius_km, limit)
 
-        # 2. Apify only
+        # 3. Apify only
         if provider_name == "apify" and self.apify_provider.is_configured():
             return await self.apify_provider.discover_businesses(query, location, radius_km, limit)
 
-        # 3. Multi-source hybrid: Query SerpAPI first for speed, fall back to Apify if needed
+        # 4. Multi-source hybrid: Query Google Places or SerpAPI, fall back to Apify
         all_businesses: List[Dict[str, Any]] = []
         job_ids = []
 
-        if self.serpapi_provider.is_configured():
+        if self.google_places_provider.is_configured():
+            try:
+                res = await self.google_places_provider.discover_businesses(query, location, radius_km, limit)
+                all_businesses.extend(res.get("businesses", []))
+                job_ids.append(f"google_places:{res.get('provider_job_id')}")
+            except Exception as e:
+                print(f"[DiscoveryOrchestrator] Google Places discovery error: {e}")
+
+        if not all_businesses and self.serpapi_provider.is_configured():
             try:
                 res = await self.serpapi_provider.discover_businesses(query, location, radius_km, limit)
                 all_businesses.extend(res.get("businesses", []))

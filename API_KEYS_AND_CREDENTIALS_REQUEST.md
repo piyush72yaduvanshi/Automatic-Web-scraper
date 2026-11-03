@@ -3,7 +3,7 @@
 **Project**: AI Sales, Lead Generation, Outreach & Social Media Operating System  
 **Prepared For**: Team Lead (TL) / Engineering Management / DevOps  
 **Date**: November 2026  
-**Document Purpose**: Consolidated access and credential request for live third-party APIs across AI, Lead Discovery, Email Infrastructure, WhatsApp, and Multi-Platform Social Media Automation.
+**Document Purpose**: Consolidated access and credential request for live third-party APIs across AI Intelligence, Google Maps Local Lead Discovery, Web Scraping, Email Infrastructure, WhatsApp, and Multi-Platform Social Media Automation.
 
 ---
 
@@ -15,13 +15,29 @@
 >
 > We have completed the implementation and testing of our **AI Sales, CRM, Outreach & Social Media Operating System** (all 54 backend automated tests passing, frontend production build verified).
 >
-> Currently, the system runs safely in offline/simulation mode. To enable **live data scraping, AI intelligence, automated email outreach, WhatsApp, and social media posting**, we need the API keys and credentials listed in the document below.
+> Filhaal system offline/simulation mode me gracefully run ho raha hai. Live Google Maps local business scraping, AI intelligence, automated email sequences, WhatsApp, aur social media publishing ko activate karne ke liye hume niche diye gaye API credentials aur keys ki requirement hai.
 >
-> I have grouped them by **Priority Level** along with the exact portal URLs, required permission scopes, and purpose for each key.
+> Maine inko priority order me categorize kar diya hai:
+> - **Priority 1 (Critical — Core Operations)**:
+>   1. **Google Maps Platform / Places API Key** (`GOOGLE_PLACES_API_KEY` / `GOOGLE_MAPS_API_KEY`) — Direct local business lead discovery from Google Maps.
+>   2. **Google Gemini API Key** (`GEMINI_API_KEY`) — Core AI reasoning, research, ICP qualification, cold email copywriting.
+>   3. **OpenRouter API Key** (`OPENROUTER_API_KEY`) — Secondary failover AI provider (Claude 3.5 Sonnet, GPT-4o).
+>   4. **SerpAPI Key** (`SERPAPI_API_KEY`) — Google Maps local pack search & SERP scraper.
+>   5. **Firecrawl Key** (`FIRECRAWL_API_KEY`) — Company website deep-scraping for tech stacks & verified emails.
+>   6. **Outbound Email SMTP** (`SMTP_USER`, `SMTP_PASSWORD`) — Cold email sequences & follow-ups.
+> - **Priority 2 (High — Direct Customer Communication & Socials)**:
+>   1. **Meta WhatsApp Cloud API** (`WHATSAPP_ACCESS_TOKEN`, `PHONE_NUMBER_ID`) — WhatsApp business messaging & replies.
+>   2. **LinkedIn API** (`LINKEDIN_ACCESS_TOKEN`, Personal & Org URNs) — Automated publishing on Founder profile & Company page.
+>   3. **X (Twitter) API v2** (`TWITTER_API_KEY`, User Tokens, Bearer Token) — Automated tweet & thread publishing.
+>   4. **Apify API Token** (`APIFY_API_TOKEN`) — Bulk Google Maps regional scraper actor.
+>   5. **Gmail OAuth Client** (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`) — Two-way inbox synchronization.
+> - **Priority 3 (Medium — Visual & Corporate Channels)**:
+>   1. **Instagram Content Publishing API** (`INSTAGRAM_ACCESS_TOKEN`, `BUSINESS_ACCOUNT_ID`).
+>   2. **Facebook Pages Graph API** (`FACEBOOK_PAGE_ACCESS_TOKEN`, `PAGE_ID`).
 >
-> Could you please review and provision or share these keys so we can update our production environment?
+> Kripya ek baar review karke in keys ka access provide kar dijiye taaki hum live production setup complete kar sakein. Detailed breakdown, exact portal links, and required permissions niche diye gaye hain.
 >
-> Thank you!  
+> Thanks & Regards,  
 > **[Your Name]**
 
 ---
@@ -30,18 +46,19 @@
 
 | # | Environment Variable | Service / Provider | Priority | Purpose |
 |:---:|:---|:---|:---:|:---|
-| 1 | `GEMINI_API_KEY` | Google AI Studio / Vertex AI | **P1 (Critical)** | Core AI reasoning, research, ICP qualification, cold email copywriting |
-| 2 | `OPENROUTER_API_KEY` | OpenRouter | **P1 (Critical)** | Secondary failover AI provider (Claude 3.5 Sonnet, GPT-4o) |
-| 3 | `SERPAPI_API_KEY` | SerpAPI | **P1 (Critical)** | Google Maps business discovery & Google search lead extraction |
-| 4 | `FIRECRAWL_API_KEY` | Firecrawl | **P1 (Critical)** | Clean web scraping of company websites to extract tech stacks & emails |
-| 5 | `APIFY_API_TOKEN` | Apify | **P2 (High)** | High-volume Google Maps Scraper actor for bulk lead discovery |
+| **1** | **`GOOGLE_PLACES_API_KEY`** *(or `GOOGLE_MAPS_API_KEY`)* | **Google Maps Platform (GCP)** | **P1 (Critical)** | **Direct Google Maps local business discovery (Phones, Addresses, Ratings, Websites, Place IDs)** |
+| 2 | `GEMINI_API_KEY` | Google AI Studio / Vertex AI | **P1 (Critical)** | Core AI reasoning, research, ICP qualification, cold email copywriting |
+| 3 | `OPENROUTER_API_KEY` | OpenRouter | **P1 (Critical)** | Secondary failover AI provider (Claude 3.5 Sonnet, GPT-4o) |
+| 4 | `SERPAPI_API_KEY` | SerpAPI | **P1 (Critical)** | Fast Google Maps local pack search & search engine scraper |
+| 5 | `FIRECRAWL_API_KEY` | Firecrawl | **P1 (Critical)** | Clean web scraping of company websites to extract tech stacks & emails |
 | 6 | `SMTP_USER` & `SMTP_PASSWORD` *(or Gmail OAuth)* | Google Workspace / SMTP | **P1 (Critical)** | Live cold email outreach & transactional sequence dispatch |
-| 7 | `GMAIL_CLIENT_ID` & `GMAIL_CLIENT_SECRET` | Google Cloud Console | **P2 (High)** | Two-way Gmail inbox sync & unified thread monitoring |
+| 7 | `APIFY_API_TOKEN` | Apify | **P2 (High)** | High-volume Google Maps Scraper actor for bulk regional lead extraction |
 | 8 | `WHATSAPP_ACCESS_TOKEN` & `PHONE_NUMBER_ID` | Meta WhatsApp Cloud API | **P2 (High)** | Omnichannel WhatsApp business messaging & reply ingestion |
 | 9 | `LINKEDIN_ACCESS_TOKEN` & URNs | LinkedIn Developer Portal | **P2 (High)** | Automated posting to LinkedIn Personal Profile & Company Page |
 | 10 | `TWITTER_API_KEY`, `ACCESS_TOKEN` & `BEARER_TOKEN` | X (Twitter) Developer Portal | **P2 (High)** | Automated tweet & thread publishing via X API v2 |
-| 11 | `INSTAGRAM_ACCESS_TOKEN` & `BUSINESS_ACCOUNT_ID` | Meta Graph API | **P3 (Medium)** | Instagram feed post & visual creative publishing |
-| 12 | `FACEBOOK_PAGE_ACCESS_TOKEN` & `PAGE_ID` | Meta Graph API | **P3 (Medium)** | Facebook Corporate Page feed publishing |
+| 11 | `GMAIL_CLIENT_ID` & `GMAIL_CLIENT_SECRET` | Google Cloud Console | **P2 (High)** | Two-way Gmail inbox sync & unified thread monitoring |
+| 12 | `INSTAGRAM_ACCESS_TOKEN` & `BUSINESS_ACCOUNT_ID` | Meta Graph API | **P3 (Medium)** | Instagram feed post & visual creative publishing |
+| 13 | `FACEBOOK_PAGE_ACCESS_TOKEN` & `PAGE_ID` | Meta Graph API | **P3 (Medium)** | Facebook Corporate Page feed publishing |
 
 ---
 
@@ -49,46 +66,64 @@
 
 ---
 
-### GROUP 1: AI Intelligence Providers (P1 — Critical)
+### GROUP 1: Google Maps Local Business Discovery & Scraping (P1 — Critical)
 
-#### 1. Google Gemini API
+#### 1. Official Google Maps Platform / Places API Key
+- **Variable Names**: `GOOGLE_PLACES_API_KEY` (or `GOOGLE_MAPS_API_KEY`)
+- **Where to get it**: [Google Cloud Console $\to$ Google Maps Platform](https://console.cloud.google.com/google/maps-apis)
+- **Required APIs to Enable in Google Cloud Console**:
+  1. **Places API (New)** & **Places API** (Places Text Search & Place Details)
+  2. **Geocoding API** (Converts city/locality/zip code into latitude/longitude coordinates for radius searches)
+  3. **Maps JavaScript API** (For displaying interactive maps and pin markers in UI)
+- **Purpose**:
+  - Direct, official extraction of local business leads from Google Maps without middleman SaaS tools.
+  - Retrieves verified business phone numbers, formatted addresses, Google star ratings, total review counts, websites, business operating statuses, and official Google Place IDs.
+- **Cost / Free Tier**:
+  - **Google Cloud provides a recurring $200 free monthly credit** for Google Maps Platform every month automatically.
+  - This $200 free credit covers approximately **28,500 Places Text Searches** or **40,000 Geocoding requests** per month at zero cost.
+
+#### 2. SerpAPI (Google Maps Local Pack Scraper)
+- **Variable Name**: `SERPAPI_API_KEY`
+- **Where to get it**: [SerpAPI Dashboard](https://serpapi.com/manage-api-key)
+- **Required Permission**: Access to `engine=google_maps` and `engine=google`.
+- **Purpose**:
+  - Fast search engine scraper parsing the Google Maps local pack (3-pack and map lists).
+  - Acts as a complementary scraper to capture competitor clusters and localized ranking results.
+- **Cost / Free Tier**: 100 free searches/month; paid plans for higher volume.
+
+#### 3. Apify (Bulk Regional Google Maps Actor)
+- **Variable Name**: `APIFY_API_TOKEN`
+- **Where to get it**: [Apify Console](https://console.apify.com/account/integrations)
+- **Required Permission**: Access to run `compass/crawler-google-places` or Google Maps scraper actors.
+- **Purpose**:
+  - High-volume background batch discovery across entire metropolitan regions or bounding boxes.
+- **Cost / Free Tier**: $5 free monthly tier.
+
+#### 4. Firecrawl API (Company Website Scraper)
+- **Variable Name**: `FIRECRAWL_API_KEY`
+- **Where to get it**: [Firecrawl Dashboard](https://www.firecrawl.dev/app/api-keys)
+- **Required Permission**: Web crawl and scrape endpoint access.
+- **Purpose**:
+  - Deep-scraping target prospect websites found on Google Maps, extracting company bios, tech stacks, and verifying contact emails while bypassing anti-bot blocks.
+- **Cost / Free Tier**: 500 free credits on signup.
+
+---
+
+### GROUP 2: AI Intelligence Providers (P1 — Critical)
+
+#### 5. Google Gemini API
 - **Variable Name**: `GEMINI_API_KEY`
 - **Where to get it**: [Google AI Studio](https://aistudio.google.com/app/apikey) or Google Cloud Console (Vertex AI).
 - **Required Permission**: Standard API Access to `gemini-1.5-pro` and `gemini-1.5-flash`.
 - **Purpose**: Powering the 15 specialized AI agents (Lead Research, ICP Scoring, Email Copywriting, Social Repurposing, Meeting Dossiers).
 - **Cost / Free Tier**: Generous free tier (up to 15 RPM free on AI Studio); pay-as-you-go thereafter.
 
-#### 2. OpenRouter API (Failover Provider)
+#### 6. OpenRouter API (Failover Provider)
 - **Variable Name**: `OPENROUTER_API_KEY`
 - **Where to get it**: [OpenRouter Dashboard](https://openrouter.ai/keys)
 - **Required Permission**: Account API Key with access to `anthropic/claude-3.5-sonnet` and `openai/gpt-4o`.
 - **Purpose**: Automatic zero-crash failover when primary AI provider experiences rate-limiting or latency spikes.
 - **Cost**: Pay-as-you-go credit balance ($5–$10 deposit is sufficient for thousands of calls).
-
----
-
-### GROUP 2: Lead Discovery & Web Scraping (P1 — Critical)
-
-#### 3. SerpAPI (Google Maps & Search Engine Data)
-- **Variable Name**: `SERPAPI_API_KEY`
-- **Where to get it**: [SerpAPI Dashboard](https://serpapi.com/manage-api-key)
-- **Required Permission**: Google Maps API & Google Search API access.
-- **Purpose**: Automated discovery of local businesses, plumbers, clinics, agencies, and B2B companies from Google Maps and SERP queries.
-- **Cost / Free Tier**: 100 free searches/month; paid plans for higher volume.
-
-#### 4. Firecrawl API (Clean Markdown Web Scraping)
-- **Variable Name**: `FIRECRAWL_API_KEY`
-- **Where to get it**: [Firecrawl Dashboard](https://www.firecrawl.dev/app/api-keys)
-- **Required Permission**: Web crawl and scrape endpoint access.
-- **Purpose**: Deep-scraping target prospect websites, extracting company bios, tech stacks, and verifying contact emails while bypassing anti-bot blocks.
-- **Cost / Free Tier**: 500 free credits on signup.
-
-#### 5. Apify API (Bulk Actor Scraping)
-- **Variable Name**: `APIFY_API_TOKEN`
-- **Where to get it**: [Apify Console](https://console.apify.com/account/integrations)
-- **Required Permission**: Run permission for `compass/crawler-google-places` or Google Maps actors.
-- **Purpose**: High-volume asynchronous lead extraction across entire geographic regions.
-- **Cost / Free Tier**: $5 free monthly tier.
 
 ---
 
@@ -118,7 +153,7 @@
 
 ### GROUP 4: WhatsApp Business Cloud API (P2 — High)
 
-#### 6. Meta WhatsApp Cloud API
+#### 7. Meta WhatsApp Cloud API
 - **Variable Names**:
   - `WHATSAPP_ACCESS_TOKEN`: Permanent System User Access Token
   - `WHATSAPP_PHONE_NUMBER_ID`: WhatsApp Sender Phone Number ID
@@ -135,7 +170,7 @@
 
 ### GROUP 5: Multi-Platform Social Media Automation (P2 / P3)
 
-#### 7. LinkedIn API (Personal Profile & Company Page)
+#### 8. LinkedIn API (Personal Profile & Company Page)
 - **Variable Names**:
   - `LINKEDIN_CLIENT_ID`: App Client ID
   - `LINKEDIN_CLIENT_SECRET`: App Client Secret
@@ -149,7 +184,7 @@
   - For Company Page: **Community Management API** with `w_organization_social`, `r_organization_social`
 - **Purpose**: Autonomous and approval-based publishing of thought leadership articles, case studies, and corporate updates.
 
-#### 8. X / Twitter API v2
+#### 9. X / Twitter API v2
 - **Variable Names**:
   - `TWITTER_API_KEY`: Consumer Key (API Key)
   - `TWITTER_API_SECRET`: Consumer Secret (API Key Secret)
@@ -162,7 +197,7 @@
 - **Purpose**: Autonomous publishing of threads, technical insights, and product build-in-public posts.
 - **Tier**: Free tier allows writing up to 1,500 tweets/month; Basic tier ($100/mo) allows read/metrics.
 
-#### 9. Instagram Content Publishing API
+#### 10. Instagram Content Publishing API
 - **Variable Names**:
   - `INSTAGRAM_ACCESS_TOKEN`: Meta Long-Lived System User Token
   - `INSTAGRAM_BUSINESS_ACCOUNT_ID`: Instagram Professional Account ID (linked to Facebook Page)
@@ -174,7 +209,7 @@
   - `pages_show_list`
 - **Purpose**: Automated container creation and publishing of visual graphics, carousel briefs, and marketing captions.
 
-#### 10. Facebook Pages Graph API
+#### 11. Facebook Pages Graph API
 - **Variable Names**:
   - `FACEBOOK_PAGE_ACCESS_TOKEN`: Never-expiring Page Access Token
   - `FACEBOOK_PAGE_ID`: Facebook Page Numeric ID
@@ -193,19 +228,23 @@ You can copy and fill in this template as keys are received:
 
 ```ini
 # ==============================================================================
-# AI SALES, CRM & SOCIAL MEDIA OS — LIVE ENVIRONMENT KEYS
+# AI SALES, CRM, GOOGLE MAPS & SOCIAL MEDIA OS — LIVE ENVIRONMENT KEYS
 # ==============================================================================
 
-# --- AI Intelligence (P1) ---
-GEMINI_API_KEY=
-OPENROUTER_API_KEY=
+# --- Official Google Maps Platform / Places API (P1 - Critical) ---
+GOOGLE_PLACES_API_KEY=
+GOOGLE_MAPS_API_KEY=
 
-# --- Lead Discovery & Scrapers (P1) ---
+# --- Lead Discovery & Scrapers (P1 - Critical) ---
 SERPAPI_API_KEY=
 FIRECRAWL_API_KEY=
 APIFY_API_TOKEN=
 
-# --- Outbound Email (SMTP or Google Workspace) (P1) ---
+# --- AI Intelligence (P1 - Critical) ---
+GEMINI_API_KEY=
+OPENROUTER_API_KEY=
+
+# --- Outbound Email (SMTP or Google Workspace) (P1 - Critical) ---
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=
@@ -247,14 +286,22 @@ FACEBOOK_PAGE_ID=
 
 ---
 
-## Quick Testing Instructions Once Keys are Received
+## How Google Maps Local Discovery Works in the Architecture
 
-1. Paste the received keys into the root `.env` file at `d:\MVP\.env`.
-2. Verify connections in the application UI:
-   - **Social Accounts**: Navigate to `Content & Social` $\to$ `Connected Accounts` tab $\to$ Click **"Verify Connection"** on each card.
-   - **Email Deliverability**: Navigate to `Deliverability & DNS` $\to$ Click **"Verify DNS Records"**.
-   - **Lead Discovery**: Navigate to `Lead Discovery` $\to$ Run a quick 5-lead test query.
-3. Run the automated test suite to verify all integrations:
-   ```bash
-   backend\venv\Scripts\pytest backend\tests -v
-   ```
+Our system supports **3 distinct ways** to pull local business leads from Google Maps:
+
+```
+                                [Discovery Orchestrator]
+                                           |
+                 +-------------------------+-------------------------+
+                 |                         |                         |
+                 v                         v                         v
+     [Official Google Places API]     [SerpAPI Google Maps]     [Apify Maps Scraper]
+     GOOGLE_PLACES_API_KEY            SERPAPI_API_KEY           APIFY_API_TOKEN
+     - Direct Google Cloud API        - Scrapes Google Maps     - Bulk regional actor
+     - Verified phone numbers         - Real local pack SERP    - Asynchronous batch runs
+     - Addresses & Place IDs          - Competitor clusters     - Thousands of rows
+     - $200 free credit/month         - Fast synchronous query  - Cloud webhook callback
+```
+
+Whenever the operator runs a query like `"Dentists in Chicago"` or `"Plumbing companies in Dallas"`, the system can query Google Maps directly via **Google Places API**, or fall back to **SerpAPI / Apify**, deduplicating and enriching every lead with website scraping.

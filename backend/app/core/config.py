@@ -48,7 +48,9 @@ class Settings(BaseSettings):
     OUTSCRAPER_API_KEY: Optional[str] = None
     OUTSCRAPER_REQUEST_TIMEOUT: int = 300
 
+    # Official Google Maps Platform / Places API
     GOOGLE_PLACES_API_KEY: Optional[str] = None
+    GOOGLE_MAPS_API_KEY: Optional[str] = None
     GOOGLE_PLACES_REQUEST_TIMEOUT: int = 30
 
     FIRECRAWL_API_KEY: Optional[str] = None
