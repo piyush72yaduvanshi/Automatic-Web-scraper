@@ -255,3 +255,23 @@ Agents can only execute tools explicitly registered in `ToolRegistry`. Unregiste
 1. **Authentication**: All `/api/v1/*` endpoints are protected by `verify_api_key` dependency. When `AUTH_ENABLED=True`, incoming requests must present `X-API-Key` or `Authorization: Bearer <key>` matching `ADMIN_API_KEY`.
 2. **SSRF Protection**: Scraping requests validate target URLs against private IP blocks (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `127.0.0.1`, `169.254.169.254`) preventing local subnet or cloud metadata server exfiltration.
 3. **Data Protection**: API credentials and secrets are loaded strictly through environment variables. Passwords and tokens are never returned in cleartext API responses. Error logs are sanitized to prevent credential reflection.
+
+---
+
+## 7. Native Workflow & Automation Engine (Zero n8n)
+
+The architecture strictly eliminates external visual node dependencies (such as n8n or Zapier) by executing all event-driven orchestrations directly in Python:
+- **Event Bus**: In-process synchronous and asynchronous event dispatching with 11 domain event triggers.
+- **Workflow Executor**: Graph traversal with conditional branch evaluation, retry policies, and execution audit logging in `workflow_executions`.
+- **Pre-Flight Deliverability Guardrails**: Live DNS verification (SPF, DKIM, DMARC, MX via `dnspython`), daily send quotas, bounce/complaint auto-pause thresholds, and a Global Outbound Kill Switch.
+
+---
+
+## 8. Multi-Platform Social Media Automation Engine
+
+Native Python adapters for official platform Graph & REST APIs:
+- **Instagram**: Meta Graph API v19 for carousel/single-image publishing and audience engagement telemetry.
+- **Facebook**: Pages API for scheduled business updates and page performance analytics.
+- **X (Twitter)**: Developer API v2 for thread composition, poll generation, and engagement tracking.
+- **LinkedIn**: Personal Profile and Organization Page publishing with rich commentary and media attachments.
+- **Object Storage**: MinIO S3-compatible asset store with automatic local disk fallback for all social creatives and generated graphics.

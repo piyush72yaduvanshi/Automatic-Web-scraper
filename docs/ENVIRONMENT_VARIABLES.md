@@ -100,3 +100,34 @@ The configuration layer (`backend/app/core/config.py`) uses **Pydantic Settings*
 | `RATE_LIMIT_PER_MINUTE`| Optional | `60` | Client request rate throttle limit. |
 | `RATE_LIMIT_BURST` | Optional | `10` | Temporary surge burst capacity above rate limit. |
 
+---
+
+### 2.8. MinIO Object Storage
+
+| Variable Name | Required? | Default Value | Description & Operational Impact if Omitted |
+| :--- | :--- | :--- | :--- |
+| `MINIO_ENDPOINT` | Optional | `localhost:9000` | MinIO or S3 endpoint host and port. |
+| `MINIO_ACCESS_KEY` | Optional | `minioadmin` | MinIO root/user access credential. |
+| `MINIO_SECRET_KEY` | Optional | `minioadmin` | MinIO root/user secret access credential. |
+| `MINIO_BUCKET_NAME`| Optional | `crm-creatives`| Default S3 bucket for creatives and media uploads. |
+| `MINIO_SECURE` | Optional | `false` | Whether to communicate using TLS/HTTPS (`true`/`false`). |
+
+---
+
+### 2.9. Multi-Platform Social Media Automation
+
+| Variable Name | Required? | Default Value | Description & Operational Impact if Omitted |
+| :--- | :--- | :--- | :--- |
+| `INSTAGRAM_ACCESS_TOKEN` | Optional | `""` | Meta Graph API User/Page token with Instagram publishing permissions. |
+| `INSTAGRAM_BUSINESS_ACCOUNT_ID` | Optional | `""` | Instagram Business Account ID. |
+| `FACEBOOK_PAGE_ACCESS_TOKEN` | Optional | `""` | Facebook Page token for scheduled post dispatch. |
+| `FACEBOOK_PAGE_ID` | Optional | `""` | Facebook Page ID. |
+| `TWITTER_BEARER_TOKEN` | Optional | `""` | X (Twitter) Developer API v2 Bearer token. |
+| `TWITTER_API_KEY` | Optional | `""` | X API Consumer Key. |
+| `TWITTER_API_SECRET` | Optional | `""` | X API Consumer Secret. |
+| `TWITTER_ACCESS_TOKEN` | Optional | `""` | X User Access Token for tweet generation. |
+| `TWITTER_ACCESS_TOKEN_SECRET` | Optional | `""` | X User Token Secret. |
+| `LINKEDIN_ACCESS_TOKEN` | Optional | `""` | LinkedIn OAuth 2.0 User Token for UGC and share API. |
+| `LINKEDIN_PERSON_URN` | Optional | `""` | LinkedIn Person URN (`urn:li:person:...`). |
+| `LINKEDIN_ORGANIZATION_URN` | Optional | `""` | LinkedIn Company Organization URN (`urn:li:organization:...`). |
+

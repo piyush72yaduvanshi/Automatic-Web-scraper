@@ -176,6 +176,13 @@ class Settings(BaseSettings):
         default=["http://localhost:5173", "http://localhost:3000"]
     )
 
+    # AI Lead Qualification ICP Weights
+    ICP_WEIGHT_FIT: float = 0.25
+    ICP_WEIGHT_PAIN: float = 0.25
+    ICP_WEIGHT_TIMING: float = 0.20
+    ICP_WEIGHT_REACHABILITY: float = 0.15
+    ICP_WEIGHT_EVIDENCE: float = 0.15
+
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     RATE_LIMIT_BURST: int = 10

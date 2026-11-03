@@ -1,216 +1,116 @@
-# CRM Lead Generation & Discovery Engine - MVP
+# AI Sales, CRM, Outreach & Marketing Operating System
 
-A comprehensive lead generation and business discovery platform that helps discover businesses, enrich contact information, and extract social profiles from publicly available data.
+An enterprise-grade, autonomous, fault-tolerant operating system pairing high-throughput multi-source lead discovery with a relational CRM, 15 specialized AI reasoning agents, native Python workflow automation (Zero n8n), multi-platform social media publishing, MinIO object storage, and pgvector semantic retrieval.
 
-## Overview
+---
 
-This platform allows users to search for businesses by category, location, and radius, then automatically enriches the results with:
+## 🌟 Key Capabilities & Modules
 
-- Business contact information (phone, email)
-- Social media profiles (Instagram, LinkedIn, Facebook, X)
-- Website information
-- Address and location details
-- Business category and description
+### 1. Lead Discovery & Multi-Scanner
+- **Multi-Source Scraping**: Google Places API, Google Maps via SerpAPI & Apify, and Firecrawl deep-web crawlers.
+- **Entity Extraction**: Robust contact extractors for verified emails, normalized E.164 phone numbers, and social media handles.
+- **Deduplication & Provenance**: Evidence tracking with SHA-256 fingerprinting and source confidence scoring.
 
-## Technology Stack
+### 2. Relational CRM & Pipeline
+- **Entity Graph**: Complete relational models for Companies, Contacts, Deals, Pipelines, Stages, Activities, Tasks, and Meetings.
+- **Deals Kanban**: Interactive drag-and-drop sales pipeline with stage velocity, deal values, and 1-click lead conversion.
+- **Company Dossiers**: Strict three-way truth separation: `verified_facts`, `inferred_insights`, and `unknowns` (zero AI hallucinations).
 
-### Backend
-- **Python 3.11+** - Core language
-- **FastAPI** - High-performance API framework
-- **PostgreSQL** - Primary database
-- **SQLAlchemy 2** - ORM with async support
-- **Alembic** - Database migrations
-- **Pydantic v2** - Data validation
-- **Celery + Redis** - Background job processing
-- **httpx** - Async HTTP client
-- **BeautifulSoup4** - HTML parsing
-- **Playwright** - Browser automation (when needed)
+### 3. AI Intelligence & 15 Specialized Agents
+- **Multi-Model Orchestration**: Priority routing via Google Gemini 2.0 Flash / Pro with failover to OpenRouter (Claude 3.5 Sonnet, GPT-4o) and zero-crash offline Heuristic NLP.
+- **Specialized Agents**: 15 scoped agents covering lead research, ICP qualification (5-factor weighted scoring), email copywriting, reply sentiment analysis, meeting prep, and deal closing.
+- **Knowledge Base RAG**: Semantic text chunking with native PostgreSQL `pgvector` 768-dimensional embeddings and cosine similarity ranking.
 
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
+### 4. Zero n8n Native Workflow Automation
+- **Event-Driven Architecture**: 100% native Python event bus with 11 domain event triggers, conditional branch evaluation, retry policies, and execution audit logging.
+- **Deliverability & Safety**: Live DNS record verification (SPF, DKIM, DMARC, MX via `dnspython`), daily send quotas, bounce/complaint circuit breakers, and an instant Global Outbound Kill Switch.
+- **Human-in-the-Loop Outreach**: Mandatory approval queue gatekeeper for all outbound emails and WhatsApp messages.
 
-### Integrations
-- **Apify** - Business discovery from Google Maps
-- **Firecrawl** - Website content extraction
-- **Outscraper** - Alternative business discovery
-- **Google Places API** - Official business data
+### 5. Multi-Platform Social Media Studio
+- **Official API Integrations**: Instagram (Meta Graph API), Facebook Pages API, X (Twitter) Developer API v2, and LinkedIn Marketing API (Personal Profile & Company Page).
+- **AI Social Studio**: Automated multi-format post generation, hook research, hashtag analysis, carousel briefs, and interactive live previews.
+- **Object Storage**: MinIO S3-compatible asset store with automatic local disk fallback for creatives and media uploads.
 
-## Features
+---
 
-### Core Features
-- ✅ Business discovery by category and location
-- ✅ Configurable search radius
-- ✅ Multi-provider support (Apify, Outscraper, Google Places)
-- ✅ Website enrichment and contact extraction
-- ✅ Email discovery and extraction
-- ✅ Phone number extraction and normalization
-- ✅ Social profile discovery (Instagram, LinkedIn, Facebook, X)
-- ✅ Duplicate detection and deduplication
-- ✅ Background job processing
-- ✅ Job status tracking and progress monitoring
-- ✅ Source evidence tracking
-- ✅ CSV export functionality
+## 🛠️ Technology Stack
 
-### Security & Compliance
-- ✅ SSRF protection
-- ✅ Rate limiting and timeout controls
-- ✅ robots.txt respect
-- ✅ No authentication bypassing
-- ✅ Environment-based configuration
-- ✅ API key security
+| Layer | Technologies |
+| :--- | :--- |
+| **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, Celery, httpx, dnspython |
+| **Databases & Cache** | PostgreSQL 16 with native `pgvector`, Redis 7, MinIO S3 Object Storage |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, TanStack Query |
+| **DevOps & Containers** | Docker, Docker Compose, Nginx, Healthcheck probes |
 
-## Project Structure
+---
 
-```
-MVP/
-├── backend/
-│   ├── alembic/                  # Database migrations
-│   ├── app/
-│   │   ├── api/                  # API routes
-│   │   │   └── v1/
-│   │   │       ├── discovery.py  # Discovery endpoints
-│   │   │       ├── leads.py      # Lead management
-│   │   │       ├── health.py     # Health checks
-│   │   │       └── stats.py      # Statistics
-│   │   ├── core/                 # Core configuration
-│   │   │   ├── config.py         # Settings
-│   │   │   ├── database.py       # DB setup
-│   │   │   └── security.py       # Security utilities
-│   │   ├── models/               # SQLAlchemy models
-│   │   ├── schemas/              # Pydantic schemas
-│   │   ├── providers/            # Provider integrations
-│   │   │   ├── discovery/        # Business discovery
-│   │   │   ├── enrichment/       # Website enrichment
-│   │   │   └── search/           # Web search
-│   │   ├── extractors/           # Data extractors
-│   │   │   ├── email.py
-│   │   │   ├── phone.py
-│   │   │   └── social.py
-│   │   ├── services/             # Business logic
-│   │   └── workers/              # Celery workers
-│   ├── tests/                    # Test suite
-│   ├── requirements.txt
-│   └── main.py                   # FastAPI application
-├── frontend/
-│   ├── src/
-│   │   ├── components/           # React components
-│   │   ├── pages/                # Page components
-│   │   ├── services/             # API clients
-│   │   ├── types/                # TypeScript types
-│   │   └── App.tsx
-│   ├── package.json
-│   └── vite.config.ts
-├── docker-compose.yml
-├── .env.example
-└── SETUP.md
-```
-
-## Quick Start
-
-See [SETUP.md](./SETUP.md) for detailed setup instructions.
+## 🚀 Quick Start Guide
 
 ### Prerequisites
+- Docker & Docker Compose
 - Python 3.11+
-- Node.js 18+
-- PostgreSQL 14+
-- Redis 7+
-- Git
+- Node.js 18+ and npm
 
-### Environment Setup
-
-1. Copy environment file:
+### 1. Start Infrastructure Services
 ```bash
-copy .env.example .env
+docker compose up -d
 ```
+This spins up:
+- PostgreSQL 16 on `localhost:5432` (with pgvector extension)
+- Redis 7 on `localhost:6379`
+- MinIO Object Storage on `localhost:9000` (Console on `localhost:9001`)
 
-2. Configure your API keys in `.env`
-
-3. Start services:
-```bash
-docker-compose up -d
-```
-
-4. Run backend:
+### 2. Backend Setup
 ```bash
 cd backend
 python -m venv venv
+# Windows:
 .\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
 pip install -r requirements.txt
-alembic upgrade head
+cp ../.env.example .env
 python main.py
 ```
+FastAPI backend will run on **http://localhost:8000** with interactive Swagger documentation at **http://localhost:8000/docs**.
 
-5. Run frontend:
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+Vite React frontend will run on **http://localhost:5173**.
 
-## API Documentation
+---
 
-Interactive API documentation available at:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+## 🧪 Testing
 
-See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed endpoint information.
-
-## Provider Setup
-
-See [PROVIDER_SETUP.md](./PROVIDER_SETUP.md) for:
-- How to get API keys
-- Provider configuration
-- Cost considerations
-- Rate limits and quotas
-
-## Architecture
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for:
-- System design
-- Data flow
-- Provider architecture
-- Security considerations
-- Scaling guidelines
-
-## Testing
-
+Run the full automated test suite (60 tests across API, CRM, AI, Deliverability, Workflows, MinIO, and Social):
 ```bash
 cd backend
 pytest tests/ -v
 ```
 
-For integration tests with real providers:
-```bash
-pytest tests/integration/ -v --real-api
-```
+---
 
-## Contributing
+## 📚 Technical Documentation
 
-1. Follow the existing code structure
-2. Add tests for new features
-3. Update documentation
-4. Ensure all tests pass
-5. Follow security guidelines
+Detailed engineering specifications and architecture guides are organized in [`docs/`](./docs/):
 
-## License
+- 🏛️ [System Architecture](./docs/ARCHITECTURE.md)
+- 🗄️ [Database Schema & Entity Models](./docs/DATABASE_SCHEMA.md)
+- 🔌 [API Endpoints Reference](./docs/API_DOCUMENTATION.md)
+- ⚙️ [Environment Variables Guide](./docs/ENVIRONMENT_VARIABLES.md)
+- 🤖 [15 Specialized AI Agents](./docs/AGENT_DOCUMENTATION.md)
+- ⚡ [Native Workflow Automation Engine](./docs/WORKFLOW_ENGINE_DOCUMENTATION.md)
+- 📱 [Social Media Automation Engine](./docs/SOCIAL_MEDIA_AUTOMATION.md)
+- 📬 [Email Deliverability & Mailbox Health](./docs/EMAIL_DELIVERABILITY.md)
+- 🛡️ [Security Review & SSRF Controls](./docs/SECURITY_REVIEW.md)
+- 🐳 [Docker Setup & Deployment Guide](./docs/DOCKER_SETUP.md)
 
-MIT License - See LICENSE file for details
+---
 
-## Support
-
-For issues and questions, please open an issue on GitHub.
-
-## Disclaimer
-
-This tool is designed for legitimate business research and lead generation purposes only. Users must:
-- Comply with all applicable laws and regulations
-- Respect website terms of service
-- Follow data protection regulations (GDPR, CCPA, etc.)
-- Obtain proper consent before contacting discovered leads
-- Not use for spam or unauthorized marketing
-
-The platform collects only publicly available business information and respects robots.txt and rate limits.
+## 📄 License
+Proprietary & Confidential. All rights reserved.
