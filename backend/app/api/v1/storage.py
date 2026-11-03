@@ -107,3 +107,4 @@ def serve_local_fallback_file(folder: str, filename: str):
     if not os.path.exists(fallback_dir):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(fallback_dir)
+

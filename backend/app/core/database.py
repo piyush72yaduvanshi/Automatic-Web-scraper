@@ -29,8 +29,12 @@ else:
 # Create database engine with fallback handling
 try:
     engine = create_engine(db_url, **engine_kwargs)
+    # Test connection eagerly if non-sqlite to detect credentials or offline service
+    if not db_url.startswith("sqlite"):
+        with engine.connect() as test_conn:
+            pass
 except Exception as e:
-    logger.warning(f"Failed to create database engine with configured DATABASE_URL: {e}. Falling back to SQLite.")
+    logger.warning(f"Configured database engine ({db_url}) unavailable ({e}). Falling back to SQLite.")
     fallback_url = "sqlite:///./crm_leads.db"
     engine = create_engine(fallback_url, connect_args={"check_same_thread": False}, echo=settings.DEBUG)
 

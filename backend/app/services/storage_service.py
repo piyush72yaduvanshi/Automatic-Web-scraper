@@ -395,3 +395,4 @@ class MinIOStorageService:
             "size_bytes": len(svg_bytes),
             "storage_provider": upload_res.get("storage_provider", "minio"),
         }
+
