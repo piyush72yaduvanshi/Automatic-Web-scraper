@@ -1,0 +1,89 @@
+# ==========================================
+# Root .gitignore - CRM Lead Discovery Platform
+# ==========================================
+
+# 1. Environment & Secret Credentials (CRITICAL - DO NOT COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 2. Python & Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 3. Node.js & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+dist-ssr/
+.pnpm-store/
+.vite/
+*.tsbuildinfo
+
+# 4. Testing & Coverage
+.pytest_cache/
+backend/.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+# 5. Local Databases
+*.db
+*.sqlite
+*.sqlite3
+backend/test.db
+
+# 6. Logs & Temp
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+.cache/
+
+# 7. Celery & Worker Schedules
+celerybeat-schedule
+celerybeat.pid
+
+# 8. Browser Automation
+.playwright/
+
+# 9. Operating System & IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

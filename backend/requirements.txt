@@ -1,0 +1,36 @@
+# Core Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.27
+alembic==1.13.1
+psycopg[binary]==3.1.18
+
+# Data Validation
+pydantic==2.6.1
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# HTTP Clients
+httpx==0.26.0
+requests==2.31.0
+
+# Web Scraping & Parsing
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# Phone Number Handling
+phonenumbers==8.13.29
+
+# Background Jobs
+celery==5.3.6
+redis==5.0.1
+
+# Security
+python-dotenv==1.0.1
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.4
