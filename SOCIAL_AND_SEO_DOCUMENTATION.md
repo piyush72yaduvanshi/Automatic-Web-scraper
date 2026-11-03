@@ -93,3 +93,4 @@ Generates ready-to-write briefs for content creators and copywriters:
 Produces high-converting metadata adhering to search engine display limits:
 - **Meta Title**: Strict limit of **60 characters**. Includes primary keyword near the beginning.
 - **Meta Description**: Strict limit of **155-160 characters**. Summarizes value proposition and includes an action-oriented CTA.
+

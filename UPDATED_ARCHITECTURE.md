@@ -220,3 +220,4 @@ The database is managed with **SQLAlchemy 2.0** and **Alembic**. It uses dialect
 2. **Credential Protection**: API keys are injected via environment variables (`.env`). Secrets are never committed to version control.
 3. **GDPR Erasure Guarantee**: Data erasure cascades through contacts, leads, notes, and messages, replacing identifying fields with `[ERASED - GDPR ARTICLE 17]` and recording the email in `suppression_list` to prevent re-acquisition.
 4. **Offline Capability**: When external LLMs or third-party APIs are unreachable, the system automatically falls back to `HeuristicAIProvider` and simulation adapters without throwing unhandled exceptions.
+

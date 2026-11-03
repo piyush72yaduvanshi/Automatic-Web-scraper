@@ -138,3 +138,4 @@ Content-Type: application/json
 - **Clear Opt-Out**: Every email must include a functional one-click unsubscribe link or clear instruction *(e.g. "Reply 'stop' to opt out")*.
 - **Accurate Headers**: From, To, Reply-To, and routing information must accurately identify the sender. Deceptive headers are strictly prohibited.
 - **Respecting Stop Requests**: Unsubscribe requests must be honored immediately (this system processes them instantaneously upon receipt).
+

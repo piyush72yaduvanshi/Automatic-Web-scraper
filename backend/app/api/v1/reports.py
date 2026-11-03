@@ -28,3 +28,4 @@ async def generate_report(payload: Dict[str, Any] = Body(...), db: Session = Dep
         return await ReportingService.generate_report(report_type=report_type, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

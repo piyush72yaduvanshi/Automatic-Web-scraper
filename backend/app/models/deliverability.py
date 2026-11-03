@@ -67,3 +67,4 @@ class EmailEvent(Base):
     event_type = Column(String(50), nullable=False, index=True)
     event_payload = Column(Text, nullable=True)  # JSON payload
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+

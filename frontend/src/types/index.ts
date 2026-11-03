@@ -540,3 +540,89 @@ export interface ExceptionItem {
   action_type: string;
 }
 
+// -------------------------------------------------------------
+// Social Media Automation Interfaces
+// -------------------------------------------------------------
+export interface SocialAccountItem {
+  id: string;
+  platform: 'INSTAGRAM' | 'FACEBOOK' | 'TWITTER' | 'LINKEDIN_PERSONAL' | 'LINKEDIN_ORG';
+  account_name: string;
+  account_handle: string;
+  account_id?: string;
+  status: 'ACTIVE' | 'NOT_CONFIGURED' | 'EXPIRED' | 'ERROR';
+  followers_count: number;
+  profile_image_url?: string;
+  token_expires_at?: string;
+  last_sync_at?: string;
+}
+
+export interface CreativeBrief {
+  visual_concept?: string;
+  aspect_ratio?: string;
+  dimensions?: string;
+  text_overlay?: string;
+  color_palette?: string[];
+}
+
+export interface SocialPostItem {
+  id: string;
+  account_id?: string;
+  platform: 'INSTAGRAM' | 'FACEBOOK' | 'TWITTER' | 'LINKEDIN_PERSONAL' | 'LINKEDIN_ORG';
+  caption: string;
+  hashtags: string[];
+  media_urls: string[];
+  creative_brief: CreativeBrief;
+  automation_mode: 'MANUAL' | 'APPROVAL_BASED' | 'FULLY_AUTOMATED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED' | 'CANCELLED';
+  scheduled_for?: string;
+  published_at?: string;
+  external_post_id?: string;
+  external_post_url?: string;
+  publishing_provider_status: string;
+  retry_count: number;
+  last_error?: string;
+  created_at: string;
+}
+
+export interface SocialAutomationRuleItem {
+  id: string;
+  name: string;
+  mode: 'MANUAL' | 'APPROVAL_BASED' | 'FULLY_AUTOMATED';
+  platforms: string[];
+  pillars: string[];
+  posting_times: string[];
+  max_posts_per_day: number;
+  is_active: boolean;
+  last_run_at?: string;
+}
+
+export interface SocialAnalyticsData {
+  summary: {
+    total_posts: number;
+    published_posts: number;
+    scheduled_posts: number;
+    draft_posts: number;
+    total_impressions: number;
+    total_reach: number;
+    total_engagements: number;
+    total_likes: number;
+    total_comments: number;
+    total_shares: number;
+    total_clicks: number;
+    average_engagement_rate: number;
+  };
+  platform_breakdown: Record<string, {
+    post_count: number;
+    impressions: number;
+    engagements: number;
+  }>;
+  ai_executive_report: string;
+}
+
+export interface SocialResearchResult {
+  trending_angles: string[];
+  audience_resonances: string[];
+  recommended_keywords: string[];
+  visual_theme: string;
+}
+

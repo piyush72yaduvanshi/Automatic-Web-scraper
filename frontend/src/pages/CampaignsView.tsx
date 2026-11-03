@@ -339,3 +339,4 @@ export const CampaignsView: React.FC = () => {
     </div>
   );
 };
+

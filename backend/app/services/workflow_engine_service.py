@@ -523,3 +523,4 @@ class WorkflowEngineService:
             db.add(db_def)
         db.commit()
         logger.info("Seeded default native Python workflows.")
+

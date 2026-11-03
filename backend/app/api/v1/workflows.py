@@ -76,3 +76,4 @@ def cancel_execution(execution_id: str, db: Session = Depends(get_db)):
         return WorkflowEngineService.cancel_execution(execution_id=execution_id, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

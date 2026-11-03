@@ -14,3 +14,4 @@ router = APIRouter(prefix="/exceptions", tags=["Exception Queue"], dependencies=
 def get_exception_queue(limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db)):
     """Retrieve triaged operational anomalies requiring human attention."""
     return ExceptionQueueService.get_exception_items(db=db, limit=limit)
+

@@ -306,3 +306,4 @@ class DeliverabilityService:
             )
             db.add(mb)
             db.commit()
+

@@ -141,3 +141,4 @@ class CommunityDiscussion(Base):
     # Status: PENDING_REVIEW, APPROVED, POSTED, DISMISSED
     status = Column(String(50), default="PENDING_REVIEW", index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+

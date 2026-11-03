@@ -39,3 +39,4 @@ def schedule_calendar_entry(data: Dict[str, Any] = Body(...), db: Session = Depe
         return ContentMarketingService.schedule_calendar_entry(data=data, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

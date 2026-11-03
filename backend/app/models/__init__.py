@@ -81,6 +81,14 @@ from app.models.reporting import (
     ReportSnapshot,
 )
 
+# Social Media Automation Models
+from app.models.social import (
+    SocialAccount,
+    SocialPost,
+    SocialAutomationRule,
+    SocialPostMetric,
+)
+
 __all__ = [
     "GUID",
     "BusinessLead",
@@ -130,4 +138,8 @@ __all__ = [
     "PaidAdReport",
     "CommunityDiscussion",
     "ReportSnapshot",
+    "SocialAccount",
+    "SocialPost",
+    "SocialAutomationRule",
+    "SocialPostMetric",
 ]

@@ -18,6 +18,7 @@ from app.models.workflow import WorkflowExecution
 from app.models.deliverability import EmailEvent
 from app.models.compliance import DataDeletionRequest
 from app.models.outreach import ConversationMessage
+from app.models.social import SocialPost
 from app.services.provider_health_service import ProviderHealthService
 
 logger = logging.getLogger(__name__)
@@ -115,6 +116,23 @@ class ExceptionQueueService:
                     "timestamp": datetime.utcnow().isoformat(),
                     "action_type": "TEST_INTEGRATION",
                 })
+
+        # 6. Social Media Publishing Failures
+        failed_social_posts = db.query(SocialPost).filter(
+            SocialPost.status == "FAILED"
+        ).order_by(SocialPost.updated_at.desc()).limit(10).all()
+
+        for sp in failed_social_posts:
+            exceptions.append({
+                "id": f"social_{sp.id}",
+                "category": "SOCIAL_PUBLISHING_ALERT",
+                "severity": "MEDIUM",
+                "title": f"Social Publishing Failed: {sp.platform}",
+                "details": sp.last_error or "Publishing failed to official platform API.",
+                "entity_id": str(sp.id),
+                "timestamp": sp.updated_at.isoformat() if sp.updated_at else datetime.utcnow().isoformat(),
+                "action_type": "RETRY_SOCIAL_POST",
+            })
 
         return {
             "total_exceptions": len(exceptions),

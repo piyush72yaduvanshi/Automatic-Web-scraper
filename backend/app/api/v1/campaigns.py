@@ -56,3 +56,4 @@ def set_campaign_status(
         return CampaignEngineService.set_campaign_status(campaign_id=campaign_id, new_status=new_status, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

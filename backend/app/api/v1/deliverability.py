@@ -50,3 +50,4 @@ def toggle_kill_switch(payload: Dict[str, Any] = Body(...), db: Session = Depend
     enabled = payload.get("enabled", False)
     reason = payload.get("reason", "Operator manual override")
     return DeliverabilityService.set_kill_switch(enabled=enabled, reason=reason, db=db)
+

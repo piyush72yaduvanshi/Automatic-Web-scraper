@@ -121,3 +121,4 @@ While AI handles classification and stop conditions automatically, **all outgoin
 1. When an `INTERESTED` or `MORE_INFORMATION` message arrives, the AI Outreach Copywriter agent drafts a contextual reply citing relevant case studies or pricing.
 2. The draft is placed into `outreach_approvals` with type `INBOX_REPLY`.
 3. The human operator reviews, edits if necessary, and clicks **Approve & Send** in the Unified Inbox UI.
+

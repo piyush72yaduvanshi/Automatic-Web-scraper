@@ -160,3 +160,4 @@ $$\text{Bounce Rate} = \frac{\text{Bounced Events}}{\text{Total Emails Sent}} \t
 $$\text{Conversion Rate} = \frac{\text{Deals Created / Meetings Booked}}{\text{Total Contacted}} \times 100$$
 
 All rates update automatically in the Campaigns View in real time.
+

@@ -50,3 +50,4 @@ def execute_deletion_request(payload: Dict[str, Any] = Body(...), db: Session = 
         return ComplianceService.execute_deletion_request(recipient=recipient, reason=reason, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

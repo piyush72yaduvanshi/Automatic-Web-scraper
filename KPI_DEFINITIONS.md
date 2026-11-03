@@ -137,3 +137,4 @@ FROM workflow_executions;
 ### 12. Human Approval Rate
 The percentage of AI-generated outreach drafts accepted by the human operator without outright rejection.
 $$\text{Approval Rate} = \left( \frac{\text{Approvals with status } \in (\text{'APPROVED'}, \text{'MODIFIED'})}{\text{Total Approvals Reviewed}} \right) \times 100$$
+

@@ -228,3 +228,4 @@ Include:
             db.add(rec)
         db.commit()
         logger.info("Seeded default SEO project and keywords.")
+

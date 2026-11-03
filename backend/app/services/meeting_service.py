@@ -123,3 +123,4 @@ Synthesize:
             "status": meeting.status,
             "calendar_sync_status": "SIMULATED_LOCAL",  # Transparent: Google Calendar API simulated unless live OAuth token set
         }
+

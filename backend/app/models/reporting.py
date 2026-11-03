@@ -25,3 +25,4 @@ class ReportSnapshot(Base):
     recommendations_json = Column(Text, nullable=True)  # JSON array of actionable recommendations
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+

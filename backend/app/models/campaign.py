@@ -85,3 +85,4 @@ class CampaignEvent(Base):
     event_type = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+

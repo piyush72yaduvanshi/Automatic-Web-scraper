@@ -79,3 +79,4 @@ class WorkflowEvent(Base):
     payload = Column(Text, nullable=False)  # JSON payload
     processed = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+

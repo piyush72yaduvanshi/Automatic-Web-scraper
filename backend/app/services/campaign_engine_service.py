@@ -199,3 +199,4 @@ class CampaignEngineService:
         db.commit()
 
         return {"id": str(cid), "old_status": old_status, "new_status": camp.status}
+

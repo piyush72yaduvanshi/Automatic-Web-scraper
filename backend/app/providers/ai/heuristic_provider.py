@@ -78,6 +78,86 @@ class HeuristicAIProvider(BaseAIProvider):
                 "estimated_duration_seconds": 30,
             }
 
+        # Handle Social Research schema
+        if "trending_angles" in schema_description:
+            return {
+                "trending_angles": [
+                    "Why agentic AI workflows outperform static automation in 2026",
+                    "The shift from mass cold blasting to hyper-personalized relevance",
+                    "How modern engineering teams eliminate manual CRM data entry"
+                ],
+                "audience_resonances": [
+                    "ROI on operational time savings (10-20 hrs/week)",
+                    "Data compliance and domain deliverability protection",
+                    "Seamless omnichannel visibility without context switching"
+                ],
+                "recommended_keywords": ["#SalesAutomation", "#AIWorkflow", "#B2BGrowth", "#GTMStrategy", "#DevOps"],
+                "visual_theme": "Modern minimalist dark mode UI with high-contrast cyan and emerald accents"
+            }
+
+        # Handle Complete Multi-Platform Social Media Posts Schema
+        if "social_posts" in schema_description:
+            return {
+                "research_summary": "High demand for actionable B2B operational frameworks with verifiable ROI metrics.",
+                "social_posts": {
+                    "INSTAGRAM": {
+                        "caption": "Efficiency isn't about working more hours. It's about designing architectures that work while you sleep. 🚀\n\nHere are 3 rules for automated B2B workflows that scale:\n\n1️⃣ Pre-qualify before you outreach.\n2️⃣ Verify domain DNS health daily.\n3️⃣ Automate routine tasks, keep strategy human.\n\nSwipe left to see our system architecture breakdown! 👉\n\nDrop a comment with 'SYSTEM' for the full technical guide.",
+                        "hashtags": ["#AIAutomation", "#SalesEngineering", "#B2BGrowth", "#SaaSArchitecture", "#WorkSmarter", "#TechFounders", "#StartupTips"],
+                        "creative_brief": {
+                            "visual_concept": "Carousel slide with clean system architecture diagram and bold headline overlay",
+                            "aspect_ratio": "1:1",
+                            "dimensions": "1080x1080",
+                            "text_overlay": "3 Rules for Scalable Sales Automation",
+                            "color_palette": ["#0f172a", "#06b6d4", "#10b981"]
+                        }
+                    },
+                    "FACEBOOK": {
+                        "caption": "Most sales teams spend 65% of their working hours on manual CRM admin, copy-pasting lead data, and chasing bounced emails.\n\nWe spent the last month building an autonomous operating system to eliminate that friction entirely.\n\nKey takeaways from our pilot tests:\n• Lead qualification time dropped from 12 mins to 4 seconds\n• Email bounce rates stayed below 1.2%\n• Sales pipeline velocity increased by 40%\n\nHow is your team modernizing its sales workflows this quarter? Let's discuss in the comments below!",
+                        "hashtags": ["#BusinessAutomation", "#SalesOperations", "#ProductivityTech"],
+                        "creative_brief": {
+                            "visual_concept": "High-impact infographic comparing manual vs automated sales operations time allocation",
+                            "aspect_ratio": "1.91:1",
+                            "dimensions": "1200x630",
+                            "text_overlay": "Manual vs Autonomous Sales Operations",
+                            "color_palette": ["#1e293b", "#3b82f6"]
+                        }
+                    },
+                    "TWITTER": {
+                        "caption": "Your sales stack shouldn't require 10 fragmented tools and endless manual syncing.\n\n1/ Automated lead discovery\n2/ Verified contact enrichment\n3/ Domain deliverability protection\n4/ AI research dossiers\n\nAll native in Python. 0 external brittle wrappers.",
+                        "hashtags": ["#BuildInPublic", "#Python", "#AI"],
+                        "creative_brief": {
+                            "visual_concept": "Code terminal preview card showing clean Python Celery and FastAPI pipeline execution",
+                            "aspect_ratio": "16:9",
+                            "dimensions": "1200x675",
+                            "text_overlay": "Autonomous Sales OS in Python",
+                            "color_palette": ["#000000", "#10b981"]
+                        }
+                    },
+                    "LINKEDIN_PERSONAL": {
+                        "caption": "Unpopular opinion in B2B sales: The problem with cold outreach isn't the channel. It's the lack of pre-flight evidence.\n\nWhen we audited 10,000 cold emails, the pattern was clear:\n\n→ 78% pitched services with zero relevance to the prospect's actual tech stack.\n→ 14% had broken SPF/DKIM authentication and landed directly in spam.\n→ Only 8% used verified business pain points.\n\nThe teams winning right now aren't sending more volume. They are qualifying deeper with automated research agents before sending a single note.\n\nWhat is your biggest bottleneck in prospect qualification today?",
+                        "hashtags": ["#SalesLeadership", "#B2BStrategy", "#ArtificialIntelligence", "#FounderInsights"],
+                        "creative_brief": {
+                            "visual_concept": "Clean data chart showing conversion rates: Mass Blasting vs Evidence-Based Outreach",
+                            "aspect_ratio": "1.91:1",
+                            "dimensions": "1200x627",
+                            "text_overlay": "Why 78% of Cold Outreach Fails",
+                            "color_palette": ["#0f172a", "#6366f1"]
+                        }
+                    },
+                    "LINKEDIN_ORG": {
+                        "caption": "We are proud to announce the release of our complete AI Sales, Lead Generation & Outreach Operating System.\n\nDesigned for modern growth teams, the platform unifies lead discovery, relational CRM pipelines, unified inbox messaging, and native workflow automation into a resilient, self-hosted system.\n\nExplore our open architecture breakdown and test our deliverability benchmarks today.",
+                        "hashtags": ["#ProductAnnouncement", "#EnterpriseSoftware", "#SalesTech", "#Innovation"],
+                        "creative_brief": {
+                            "visual_concept": "Enterprise product banner showcasing dashboard interface with live metrics",
+                            "aspect_ratio": "1.91:1",
+                            "dimensions": "1200x627",
+                            "text_overlay": "Enterprise AI Sales & Marketing Operating System",
+                            "color_palette": ["#090d16", "#38bdf8"]
+                        }
+                    }
+                }
+            }
+
         # Handle Email Personalization schema
         if "subject_line" in schema_description or "email_body" in schema_description:
             return {

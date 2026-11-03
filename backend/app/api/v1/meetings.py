@@ -24,3 +24,4 @@ async def schedule_meeting(data: Dict[str, Any] = Body(...), db: Session = Depen
         return await MeetingService.schedule_meeting(data=data, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

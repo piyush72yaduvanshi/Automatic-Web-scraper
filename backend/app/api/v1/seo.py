@@ -46,3 +46,4 @@ async def create_content_brief(keyword_id: str, db: Session = Depends(get_db)):
         return await SEOService.create_content_brief(keyword_id=keyword_id, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

@@ -48,3 +48,4 @@ class DataDeletionRequest(Base):
     requested_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime, nullable=True)
     audit_notes = Column(Text, nullable=True)
+

@@ -114,3 +114,4 @@ Executions transition through distinct persistent states:
 ### Idempotency & Worker Crash Recovery
 - Every step result is committed immediately to the `step_results` JSON column in `workflow_executions`.
 - If a background worker restarts, uncompleted executions are detected via `status == 'RUNNING'` and resumed from their last successful checkpoint (`current_step_id`), preventing duplicate external actions.
+

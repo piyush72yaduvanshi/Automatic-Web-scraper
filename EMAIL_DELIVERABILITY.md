@@ -112,3 +112,4 @@ Before launching any outreach sequence on a new sending domain, complete this ch
 5. [ ] **DMARC Record**: Add TXT record at `_dmarc.domain.com`: `v=DMARC1; p=none; rua=mailto:dmarc@domain.com`.
 6. [ ] **System Verification**: Run `POST /api/v1/deliverability/domains/{id}/verify` and confirm all 4 records display `VERIFIED`.
 7. [ ] **Warm-up**: Keep daily limit under 20 emails for the first 14 days.
+

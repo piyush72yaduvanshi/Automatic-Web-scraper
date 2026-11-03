@@ -36,3 +36,4 @@ def execute_due_sequence_steps(sequence_id: str, db: Session = Depends(get_db)):
         return SequenceEngineService.execute_due_sequence_steps(sequence_id=sequence_id, db=db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

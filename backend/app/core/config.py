@@ -79,6 +79,29 @@ class Settings(BaseSettings):
     WHATSAPP_VERIFY_TOKEN: str = "crm_whatsapp_verify_token_default"
     WHATSAPP_BUSINESS_ACCOUNT_ID: Optional[str] = None
 
+    # Social Media Automation Providers (Official APIs)
+    # Instagram Content Publishing API
+    INSTAGRAM_ACCESS_TOKEN: Optional[str] = None
+    INSTAGRAM_BUSINESS_ACCOUNT_ID: Optional[str] = None
+
+    # Facebook Pages Graph API
+    FACEBOOK_PAGE_ACCESS_TOKEN: Optional[str] = None
+    FACEBOOK_PAGE_ID: Optional[str] = None
+
+    # X (Twitter) API v2
+    TWITTER_API_KEY: Optional[str] = None
+    TWITTER_API_SECRET: Optional[str] = None
+    TWITTER_ACCESS_TOKEN: Optional[str] = None
+    TWITTER_ACCESS_TOKEN_SECRET: Optional[str] = None
+    TWITTER_BEARER_TOKEN: Optional[str] = None
+
+    # LinkedIn Posts API v2 (Personal & Organization Pages)
+    LINKEDIN_CLIENT_ID: Optional[str] = None
+    LINKEDIN_CLIENT_SECRET: Optional[str] = None
+    LINKEDIN_ACCESS_TOKEN: Optional[str] = None
+    LINKEDIN_PERSON_URN: Optional[str] = None  # e.g. "urn:li:person:abcdef"
+    LINKEDIN_ORGANIZATION_URN: Optional[str] = None  # e.g. "urn:li:organization:123456"
+
     # Lead Qualification Weights (Default 25/25/20/15/15)
     ICP_WEIGHT_FIT: float = 0.25
     ICP_WEIGHT_PAIN: float = 0.25

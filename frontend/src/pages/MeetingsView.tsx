@@ -253,3 +253,4 @@ export const MeetingsView: React.FC = () => {
     </div>
   );
 };
+
