@@ -334,3 +334,209 @@ export interface HealthSummary {
   disabled_count: number;
   integrations: IntegrationStatusItem[];
 }
+
+// -------------------------------------------------------------
+// Phase 2: Workflow Automation Engine (No n8n)
+// -------------------------------------------------------------
+export interface WorkflowDefinitionItem {
+  id: string;
+  name: string;
+  description?: string;
+  version: number;
+  trigger_type: string;
+  trigger_config?: Record<string, any>;
+  steps: Array<{
+    step_id: string;
+    name: string;
+    action_type: string;
+    config?: Record<string, any>;
+  }>;
+  is_active: boolean;
+  timeout_seconds: number;
+  created_at?: string;
+}
+
+export interface WorkflowExecutionItem {
+  id: string;
+  workflow_id: string;
+  workflow_name: string;
+  trigger_event: string;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'RETRYING' | 'CANCELLED' | 'WAITING_FOR_APPROVAL';
+  current_step_id?: string;
+  retry_count: number;
+  start_time?: string;
+  completion_time?: string;
+  error_info?: string;
+  step_results?: Record<string, any>;
+  created_at: string;
+}
+
+// -------------------------------------------------------------
+// Phase 2: Deliverability & Mailbox Health
+// -------------------------------------------------------------
+export interface EmailAccountItem {
+  id: string;
+  email_address: string;
+  provider: string;
+  oauth_status: string;
+  sending_permissions: boolean;
+  daily_quota: number;
+  sent_today: number;
+  health_status: 'HEALTHY' | 'WARMING' | 'DEGRADED' | 'RESTRICTED';
+  last_sync_at?: string;
+  last_send_at?: string;
+  last_error?: string;
+}
+
+export interface EmailDomainItem {
+  id: string;
+  domain_name: string;
+  spf_status: string;
+  dkim_status: string;
+  dmarc_status: string;
+  mx_status: string;
+  dns_records?: Record<string, any>;
+  last_checked_at?: string;
+}
+
+export interface DeliverabilityStats {
+  kill_switch_active: boolean;
+  total_sent: number;
+  total_delivered: number;
+  total_bounced: number;
+  total_replied: number;
+  total_unsubscribed: number;
+  total_complaints: number;
+  bounce_rate_percent: number;
+  reply_rate_percent: number;
+  mailbox_count: number;
+  domain_count: number;
+}
+
+// -------------------------------------------------------------
+// Phase 2: Follow-up Sequences & Campaigns
+// -------------------------------------------------------------
+export interface FollowupStepItem {
+  step_number: number;
+  delay_days: number;
+  channel: string;
+  subject_template?: string;
+  body_template?: string;
+}
+
+export interface FollowupSequenceItem {
+  id: string;
+  name: string;
+  description?: string;
+  campaign_type: string;
+  is_active: boolean;
+  stop_on_reply: boolean;
+  steps_count: number;
+  steps: FollowupStepItem[];
+}
+
+export interface CampaignDetailedItem {
+  id: string;
+  name: string;
+  description?: string;
+  campaign_type: string;
+  channel: string;
+  status: string;
+  total_members: number;
+  active_members: number;
+  sent_count: number;
+  delivered_count: number;
+  replied_count: number;
+  bounced_count: number;
+  created_at?: string;
+}
+
+// -------------------------------------------------------------
+// Phase 2: Compliance & Consent
+// -------------------------------------------------------------
+export interface ConsentRecordItem {
+  id: string;
+  recipient: string;
+  source: string;
+  lawful_basis: string;
+  channel_email_consent: boolean;
+  channel_whatsapp_consent: boolean;
+  marketing_eligible: boolean;
+  compliance_notes?: string;
+  collected_at?: string;
+}
+
+// -------------------------------------------------------------
+// Phase 2: Content & SEO
+// -------------------------------------------------------------
+export interface ContentItemData {
+  id: string;
+  title: string;
+  pillar: string;
+  target_audience?: string;
+  platforms: string[];
+  core_idea: string;
+  platform_drafts: Record<string, string>;
+  status: string;
+  published_at?: string;
+  created_at?: string;
+}
+
+export interface CalendarEntryItem {
+  id: string;
+  content_item_id: string;
+  content_title: string;
+  pillar: string;
+  channel: string;
+  scheduled_for: string;
+  status: string;
+  publishing_provider_status: string;
+}
+
+export interface SEOProjectItem {
+  id: string;
+  name: string;
+  target_domain: string;
+  target_location: string;
+  gsc_connected: boolean;
+  keywords_count: number;
+}
+
+export interface SEOKeywordItem {
+  id: string;
+  keyword: string;
+  cluster_name: string;
+  search_intent: string;
+  search_volume: number;
+  difficulty_score: number;
+  target_page_type: string;
+  meta_title?: string;
+  meta_description?: string;
+  status: string;
+}
+
+// -------------------------------------------------------------
+// Phase 2: Reports & Exceptions
+// -------------------------------------------------------------
+export interface ReportSnapshotItem {
+  id: string;
+  report_type: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  period_start: string;
+  period_end: string;
+  executive_summary: string;
+  metrics: Record<string, any>;
+  recommendations: string[];
+  created_at: string;
+}
+
+export interface ExceptionItem {
+  id: string;
+  category: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  title: string;
+  details: string;
+  entity_id: string;
+  timestamp: string;
+  action_type: string;
+}
+

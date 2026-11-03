@@ -38,6 +38,49 @@ from app.models.orchestration import (
     AuditLog,
 )
 
+# Phase 2 Workflow Automation Engine
+from app.models.workflow import (
+    WorkflowDefinition,
+    WorkflowExecution,
+    WorkflowEvent,
+)
+
+# Phase 2 Deliverability & Mailbox Health
+from app.models.deliverability import (
+    EmailAccount,
+    EmailDomain,
+    EmailEvent,
+)
+
+# Phase 2 Advanced Campaigns & Sequences
+from app.models.campaign import (
+    CampaignMember,
+    FollowupSequence,
+    FollowupStep,
+    CampaignEvent,
+)
+
+# Phase 2 Global Consent & Compliance
+from app.models.compliance import (
+    ConsentRecord,
+    DataDeletionRequest,
+)
+
+# Phase 2 Social, SEO & Marketing
+from app.models.marketing import (
+    ContentItem,
+    ContentCalendarEntry,
+    SEOProject,
+    SEOKeyword,
+    PaidAdReport,
+    CommunityDiscussion,
+)
+
+# Phase 2 Reporting
+from app.models.reporting import (
+    ReportSnapshot,
+)
+
 __all__ = [
     "GUID",
     "BusinessLead",
@@ -67,4 +110,24 @@ __all__ = [
     "KnowledgeChunk",
     "MemoryRecord",
     "AuditLog",
+    # Phase 2
+    "WorkflowDefinition",
+    "WorkflowExecution",
+    "WorkflowEvent",
+    "EmailAccount",
+    "EmailDomain",
+    "EmailEvent",
+    "CampaignMember",
+    "FollowupSequence",
+    "FollowupStep",
+    "CampaignEvent",
+    "ConsentRecord",
+    "DataDeletionRequest",
+    "ContentItem",
+    "ContentCalendarEntry",
+    "SEOProject",
+    "SEOKeyword",
+    "PaidAdReport",
+    "CommunityDiscussion",
+    "ReportSnapshot",
 ]

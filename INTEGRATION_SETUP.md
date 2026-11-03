@@ -167,3 +167,4 @@ cd backend
 celery -A app.core.celery_app worker --loglevel=info -P solo
 ```
 *(Note: On Windows machines, the `-P solo` pool flag prevents multiprocessing semaphore deadlocks).*
+

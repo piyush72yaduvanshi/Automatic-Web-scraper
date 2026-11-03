@@ -109,3 +109,4 @@ class WhatsAppProvider:
         except Exception as e:
             logger.warning(f"Error parsing WhatsApp webhook payload: {e}")
         return events
+

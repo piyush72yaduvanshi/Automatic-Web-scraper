@@ -152,3 +152,4 @@ def calculate_icp_score(
         "composite_score": round(score, 1),
         "status": "Qualified" if score >= 70 else ("Maybe" if score >= 45 else "Rejected"),
     }
+

@@ -38,3 +38,4 @@ class GUID(TypeDecorator):
             except (ValueError, AttributeError):
                 return value
         return value
+

@@ -119,3 +119,4 @@ class AIProviderRouter:
 
 # Global router singleton
 ai_router = AIProviderRouter()
+

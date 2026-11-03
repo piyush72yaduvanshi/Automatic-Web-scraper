@@ -466,3 +466,4 @@ Tools represent deterministic, read-only or transactional actions that agents ca
 | `query_crm_pipeline`| None | Snapshot of pipelines, stages, and deal counts | Read-only aggregation. |
 | `calculate_icp_score`| `lead_id` (str), `weights` (dict) | Evaluated score, status, and breakdown | Deterministic calculation. Updates lead record. |
 | `knowledge_retrieval`| `query` (str), `top_k` (int) | Ranked document chunks with embeddings | Read-only semantic search. |
+

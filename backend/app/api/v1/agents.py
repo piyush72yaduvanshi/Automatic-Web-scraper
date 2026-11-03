@@ -91,3 +91,4 @@ def get_agent_run(run_id: str, db: Session = Depends(get_db)):
         "duration_ms": run.duration_ms,
         "created_at": run.created_at.isoformat(),
     }
+

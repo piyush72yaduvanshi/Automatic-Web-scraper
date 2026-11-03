@@ -180,3 +180,4 @@ def test_analytics_computation(db):
     assert "tasks_and_calendar" in overview
     assert "ai_telemetry" in overview
     assert overview["ai_telemetry"]["total_agent_runs"] >= 0
+

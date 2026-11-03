@@ -13,6 +13,17 @@ from app.api.v1 import (
     outreach,
     knowledge,
     analytics,
+    # Phase 2 Routers
+    workflows,
+    deliverability,
+    campaigns,
+    sequences,
+    compliance,
+    content,
+    seo,
+    meetings,
+    reports,
+    exceptions,
 )
 
 api_router = APIRouter()
@@ -27,3 +38,15 @@ api_router.include_router(agents.router)
 api_router.include_router(outreach.router)
 api_router.include_router(knowledge.router)
 api_router.include_router(analytics.router)
+
+# Phase 2 Routes
+api_router.include_router(workflows.router)
+api_router.include_router(deliverability.router)
+api_router.include_router(campaigns.router)
+api_router.include_router(sequences.router)
+api_router.include_router(compliance.router)
+api_router.include_router(content.router)
+api_router.include_router(seo.router)
+api_router.include_router(meetings.router)
+api_router.include_router(reports.router)
+api_router.include_router(exceptions.router)

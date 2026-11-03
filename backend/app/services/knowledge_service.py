@@ -139,3 +139,4 @@ class KnowledgeService:
         if norm_a == 0 or norm_b == 0:
             return 0.0
         return dot / (norm_a * norm_b)
+

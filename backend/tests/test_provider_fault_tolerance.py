@@ -52,3 +52,4 @@ def test_provider_toggle_and_failure_recording():
     ProviderHealthService.record_success("gemini")
     statuses = {s["name"]: s for s in ProviderHealthService.get_all_statuses()}
     assert statuses["gemini"]["status"] == IntegrationStatus.HEALTHY.value
+

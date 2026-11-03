@@ -452,3 +452,4 @@ class CRMService:
         db.commit()
         db.refresh(meeting)
         return meeting
+

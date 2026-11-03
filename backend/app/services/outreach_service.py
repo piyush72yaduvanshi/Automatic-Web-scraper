@@ -300,3 +300,4 @@ class OutreachService:
     @classmethod
     def get_conversation(cls, conv_id: str, db: Session) -> Optional[Conversation]:
         return db.query(Conversation).filter(Conversation.id == uuid.UUID(str(conv_id))).first()
+

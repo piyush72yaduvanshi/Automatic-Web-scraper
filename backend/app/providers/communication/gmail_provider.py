@@ -89,3 +89,4 @@ class GmailProvider:
             logger.error(f"Gmail send exception: {e}")
             ProviderHealthService.record_failure(cls.provider_name, str(e))
             return {"success": False, "error": str(e)}
+

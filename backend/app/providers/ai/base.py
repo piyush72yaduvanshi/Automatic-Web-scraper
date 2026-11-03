@@ -40,3 +40,4 @@ class BaseAIProvider(ABC):
     async def generate_embeddings(self, text: str) -> Optional[List[float]]:
         """Generate vector embedding for semantic search / RAG."""
         pass
+

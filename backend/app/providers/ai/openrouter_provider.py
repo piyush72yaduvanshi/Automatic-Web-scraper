@@ -110,3 +110,4 @@ class OpenRouterAIProvider(BaseAIProvider):
     async def generate_embeddings(self, text: str) -> Optional[List[float]]:
         # OpenRouter focus is chat completion; return None so router falls back gracefully
         return None
+

@@ -221,6 +221,40 @@ def get_conversation(conv_id: str, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/conversations/{conv_id}/messages")
+async def send_or_receive_message(
+    conv_id: str,
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Post a message to a conversation.
+    If direction is INBOUND, runs ReplyIntelligenceService (11 intent categories + stop conditions).
+    """
+    direction = payload.get("direction", "INBOUND").upper()
+    body_text = payload.get("body", "")
+    sender = payload.get("sender", "prospect@example.com")
+
+    if direction == "INBOUND":
+        from app.services.reply_intelligence_service import ReplyIntelligenceService
+        return await ReplyIntelligenceService.process_incoming_message(
+            conversation_id=conv_id,
+            sender=sender,
+            body_text=body_text,
+            db=db,
+        )
+    else:
+        # Outbound message via approval queue
+        approval = OutreachService.stage_outreach_draft(
+            recipient=payload.get("recipient", sender),
+            subject=payload.get("subject", "Reply"),
+            body=body_text,
+            channel="EMAIL",
+            db=db,
+        )
+        return {"status": "staged_for_approval", "approval_id": str(approval.id)}
+
+
 # -------------------------------------------------------------
 # WhatsApp Webhook
 # -------------------------------------------------------------
@@ -285,3 +319,4 @@ async def handle_whatsapp_webhook(payload: Dict[str, Any] = Body(...), db: Sessi
         db.commit()
 
     return {"status": "processed", "events_count": len(events)}
+

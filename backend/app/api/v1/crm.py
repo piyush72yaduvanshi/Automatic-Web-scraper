@@ -355,3 +355,4 @@ async def schedule_meeting(
 ):
     meeting = await CRMService.schedule_meeting_with_ai_prep(db, data)
     return {"id": str(meeting.id), "title": meeting.title, "status": "scheduled"}
+

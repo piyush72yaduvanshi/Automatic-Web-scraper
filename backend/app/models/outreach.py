@@ -135,3 +135,4 @@ class SuppressionRecord(Base):
     channel = Column(String(50), default="ALL")  # EMAIL, WHATSAPP, ALL
     reason = Column(String(100), default="UNSUBSCRIBE")  # UNSUBSCRIBE, BOUNCE, COMPLAINT, MANUAL
     opted_out_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+

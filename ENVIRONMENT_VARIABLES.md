@@ -99,3 +99,4 @@ The configuration layer (`backend/app/core/config.py`) uses **Pydantic Settings*
 | `BLOCKED_DOMAINS` | Optional | `localhost,127.0.0.1,0.0.0.0` | Comma-delimited list of blocked hostname destinations. |
 | `RATE_LIMIT_PER_MINUTE`| Optional | `60` | Client request rate throttle limit. |
 | `RATE_LIMIT_BURST` | Optional | `10` | Temporary surge burst capacity above rate limit. |
+

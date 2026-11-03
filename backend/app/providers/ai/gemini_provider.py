@@ -142,3 +142,4 @@ class GeminiAIProvider(BaseAIProvider):
         except Exception as e:
             logger.warning(f"Gemini generate_embeddings error: {e}")
         return None
+

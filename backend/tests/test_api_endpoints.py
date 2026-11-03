@@ -118,3 +118,4 @@ def test_analytics_endpoints(client: TestClient):
     assert "pipeline" in data
     assert "tasks_and_calendar" in data
     assert "ai_telemetry" in data
+

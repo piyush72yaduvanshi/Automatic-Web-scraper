@@ -356,3 +356,4 @@ def downgrade() -> None:
     op.drop_table('pipelines')
     op.drop_table('contacts')
     op.drop_table('companies')
+

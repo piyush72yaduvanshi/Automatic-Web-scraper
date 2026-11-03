@@ -87,6 +87,17 @@ class HeuristicAIProvider(BaseAIProvider):
                 "call_to_action": "10-minute call next week",
             }
 
+        # Handle Social Content Repurposing schema
+        if "platform_drafts" in schema_description:
+            return {
+                "platform_drafts": {
+                    "LINKEDIN": f"Most organizations struggle with operational friction.\n\nHere is what we discovered analyzing growth patterns:\n1. Automating pre-qualification saves 15 hours/week.\n2. Verified outreach converts 3x higher.\n\nHow is your team approaching this?",
+                    "X": "Stop blasting unverified cold pitches.\n\nPre-qualify your accounts with evidence first and write 1-on-1 personalized notes.",
+                    "REDDIT": "Sharing some operational benchmarks: we noticed a 3x increase in reply rates when switching from generic volume to evidence-based qualification. Anyone else testing similar workflows?",
+                },
+                "summary_hook": "Evidence-backed sales operations breakdown",
+            }
+
         # Extract people / executives
         key_people = []
         exec_matches = re.findall(

@@ -118,3 +118,4 @@ The automated security test suite (`backend/tests/test_security.py`) was execute
 - `TestEmailValidation::test_valid_email`: **PASSED** (Validates deliverable addresses)
 - `TestEmailValidation::test_invalid_email`: **PASSED** (Rejects malformed strings)
 - `TestEmailValidation::test_placeholder_email`: **PASSED** (Blocks `example.com`, `domain.com`)
+

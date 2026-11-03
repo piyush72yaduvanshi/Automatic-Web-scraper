@@ -61,3 +61,4 @@ async def search_knowledge(
 
     results = await KnowledgeService.search_knowledge(query=query, limit=limit, db=db)
     return {"query": query, "results": results}
+

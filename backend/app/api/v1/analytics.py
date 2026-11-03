@@ -28,3 +28,4 @@ def get_leads_analytics(db: Session = Depends(get_db)):
     """Lead discovery, qualification, and channel availability metrics."""
     overview = AnalyticsService.get_dashboard_overview(db)
     return overview["leads"]
+

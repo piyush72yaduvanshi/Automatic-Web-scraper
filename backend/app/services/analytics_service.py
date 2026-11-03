@@ -127,3 +127,4 @@ class AnalyticsService:
                 "estimated_cost_usd": round(float(total_cost), 4),
             },
         }
+

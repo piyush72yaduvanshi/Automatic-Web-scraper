@@ -58,3 +58,4 @@ def toggle_integration(
     if not success:
         raise HTTPException(status_code=404, detail=f"Integration '{provider_name}' not found.")
     return {"provider": provider_name, "is_enabled": enabled, "status": "updated"}
+

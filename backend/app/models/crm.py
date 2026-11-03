@@ -199,3 +199,4 @@ class Meeting(Base):
     # Relationships
     company = relationship("Company", back_populates="meetings")
     contact = relationship("Contact", back_populates="meetings")
+

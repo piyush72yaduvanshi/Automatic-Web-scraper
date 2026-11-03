@@ -93,3 +93,4 @@ class BaseSpecializedAgent(ABC):
             "message": f"Agent {self.name} encountered an error: {error}. Safe default provided.",
             "data": {},
         }
+
