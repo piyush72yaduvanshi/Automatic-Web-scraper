@@ -1,15 +1,34 @@
 """Application configuration using Pydantic settings."""
 
+from pathlib import Path
+import os
 from typing import List, Optional, Union
+from dotenv import load_dotenv
 from pydantic import Field, PostgresDsn, RedisDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Proactively discover and load .env files from both backend/ and project root
+_CURRENT_FILE = Path(__file__).resolve()
+_BACKEND_DIR = _CURRENT_FILE.parent.parent.parent  # d:\MVP\backend
+_ROOT_DIR = _BACKEND_DIR.parent  # d:\MVP
+
+_CANDIDATE_ENVS = [
+    _BACKEND_DIR / ".env",
+    _ROOT_DIR / ".env",
+    Path(".env"),
+    Path("backend/.env"),
+]
+
+for _env_path in _CANDIDATE_ENVS:
+    if _env_path.is_file():
+        load_dotenv(dotenv_path=_env_path, override=False)
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=tuple(str(p) for p in _CANDIDATE_ENVS if p.is_file()) or ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"
@@ -28,14 +47,40 @@ class Settings(BaseSettings):
 
     # Database (Dialect-agnostic: supports postgresql+psycopg, postgresql+asyncpg, sqlite)
     DATABASE_URL: Union[PostgresDsn, str] = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/crm_leads"
+        default="postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
     )
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
     DATABASE_POOL_RECYCLE: int = 3600
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v):
+        if not v:
+            return "postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
+        s = str(v)
+        # Handle default dev container credentials
+        if "postgres:postgres@localhost:5432" in s:
+            s = s.replace("postgres:postgres@localhost:5432", "postgres:postgres_dev_password_change_in_prod@localhost:5432")
+        return s
+
     # Redis
-    REDIS_URL: Union[RedisDsn, str] = Field(default="redis://localhost:6379/0")
+    REDIS_URL: Union[RedisDsn, str] = Field(
+        default="redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+    )
+    REDIS_PASSWORD: Optional[str] = "redis_dev_password_change_in_prod"
+
+    @field_validator("REDIS_URL", mode="before")
+    @classmethod
+    def assemble_redis_url(cls, v):
+        if not v:
+            return "redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+        s = str(v)
+        # If localhost Redis without password, inject container dev password
+        if "localhost:6379" in s and "@" not in s:
+            pwd = os.getenv("REDIS_PASSWORD", "redis_dev_password_change_in_prod")
+            return f"redis://:{pwd}@localhost:6379/0"
+        return s
 
     # MinIO Object Storage (Images, Creatives, Lead Collateral & Export Storage)
     MINIO_ENDPOINT: str = "localhost:9000"
@@ -50,8 +95,19 @@ class Settings(BaseSettings):
     VECTOR_DIMENSION: int = 768
 
     # Celery
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+
+    @field_validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND", mode="before")
+    @classmethod
+    def assemble_celery_url(cls, v):
+        if not v:
+            return "redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+        s = str(v)
+        if "localhost:6379" in s and "@" not in s:
+            pwd = os.getenv("REDIS_PASSWORD", "redis_dev_password_change_in_prod")
+            return f"redis://:{pwd}@localhost:6379/0"
+        return s
 
     # Provider API Keys
     APIFY_API_TOKEN: Optional[str] = None
@@ -95,56 +151,26 @@ class Settings(BaseSettings):
     WHATSAPP_BUSINESS_ACCOUNT_ID: Optional[str] = None
 
     # Social Media Automation Providers (Official APIs)
-    # Instagram Content Publishing API
     INSTAGRAM_ACCESS_TOKEN: Optional[str] = None
     INSTAGRAM_BUSINESS_ACCOUNT_ID: Optional[str] = None
-
-    # Facebook Pages Graph API
     FACEBOOK_PAGE_ACCESS_TOKEN: Optional[str] = None
     FACEBOOK_PAGE_ID: Optional[str] = None
-
-    # X (Twitter) API v2
+    TWITTER_BEARER_TOKEN: Optional[str] = None
     TWITTER_API_KEY: Optional[str] = None
     TWITTER_API_SECRET: Optional[str] = None
     TWITTER_ACCESS_TOKEN: Optional[str] = None
     TWITTER_ACCESS_TOKEN_SECRET: Optional[str] = None
-    TWITTER_BEARER_TOKEN: Optional[str] = None
-
-    # LinkedIn Posts API v2 (Personal & Organization Pages)
     LINKEDIN_CLIENT_ID: Optional[str] = None
     LINKEDIN_CLIENT_SECRET: Optional[str] = None
     LINKEDIN_ACCESS_TOKEN: Optional[str] = None
-    LINKEDIN_PERSON_URN: Optional[str] = None  # e.g. "urn:li:person:abcdef"
-    LINKEDIN_ORGANIZATION_URN: Optional[str] = None  # e.g. "urn:li:organization:123456"
+    LINKEDIN_ORG_ID: Optional[str] = None
 
-    # Lead Qualification Weights (Default 25/25/20/15/15)
-    ICP_WEIGHT_FIT: float = 0.25
-    ICP_WEIGHT_PAIN: float = 0.25
-    ICP_WEIGHT_TIMING: float = 0.20
-    ICP_WEIGHT_REACHABILITY: float = 0.15
-    ICP_WEIGHT_EVIDENCE: float = 0.15
-
-    # Security & Auth
-    SECRET_KEY: str = "development-secret-key-change-in-production-ai-sales-crm-os"
-    ADMIN_API_KEY: str = "dev-admin-key-ai-sales-crm"
-    AUTH_ENABLED: bool = False
+    # Security
+    SECRET_KEY: str = "development-secret-key-change-in-production"
+    API_KEY: Optional[str] = None
     ALLOWED_ORIGINS: List[str] = Field(
-        default=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:8000",
-            "http://127.0.0.1:8000",
-        ]
+        default=["http://localhost:5173", "http://localhost:3000"]
     )
-
-    @field_validator("ALLOWED_ORIGINS", mode="before")
-    @classmethod
-    def parse_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
 
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
@@ -157,7 +183,7 @@ class Settings(BaseSettings):
 
     # Crawler Configuration
     MAX_CONCURRENT_REQUESTS: int = 5
-    REQUEST_DELAY_SECONDS: int = 1
+    REQUEST_DELAY_SECONDS: float = 1.0
     MAX_RETRIES: int = 3
     USER_AGENT: str = "CRM-Lead-Discovery-Bot/1.0"
 
@@ -167,17 +193,20 @@ class Settings(BaseSettings):
         default=["localhost", "127.0.0.1", "0.0.0.0"]
     )
 
-    @field_validator("BLOCKED_DOMAINS", mode="before")
-    @classmethod
-    def parse_blocked_domains(cls, v):
-        if isinstance(v, str):
-            return [domain.strip() for domain in v.split(",")]
-        return v
-
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
 
+    @field_validator("ALLOWED_ORIGINS", "BLOCKED_DOMAINS", mode="before")
+    @classmethod
+    def parse_str_list(cls, v):
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                return [i.strip() for i in v.split(",") if i.strip()]
+        return v
 
-# Global settings instance
+
 settings = Settings()
