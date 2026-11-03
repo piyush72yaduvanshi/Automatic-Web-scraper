@@ -1,453 +1,585 @@
-# API Documentation
+# AI Sales & CRM Operating System — REST API Specification
 
-Base URL: `http://localhost:8000/api/v1`
+## 1. Overview & Authentication
 
-## Interactive Documentation
+All endpoints in the AI Sales & CRM Operating System are hosted under `/api/v1/` on the FastAPI server (default base URL: `http://localhost:8000`).
 
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-
-## Authentication
-
-Currently, the MVP does not require authentication. Future versions will implement JWT-based authentication.
-
-## Endpoints
-
-### Health & Status
-
-#### `GET /health`
-
-Check service health.
-
-**Response:**
+### Authentication
+Security is enforced by constant-time string comparison (`backend/app/core/security.py`). When `AUTH_ENABLED=True` in environment configuration, requests must include the administrative key in one of two formats:
+```http
+X-API-Key: your_admin_api_key_here
+```
+or
+```http
+Authorization: Bearer your_admin_api_key_here
+```
+If omitted or invalid, the API returns:
 ```json
 {
-  "status": "healthy",
-  "database": "healthy",
-  "redis": "healthy",
-  "version": "1.0.0"
+  "detail": "Invalid or missing API key"
+}
+```
+*(Status: `401 Unauthorized`)*
+
+---
+
+## 2. API Endpoints by Domain
+
+---
+
+### 2.1. Centralized Integrations & Provider Health
+
+#### `GET /api/v1/integrations`
+Retrieves live health status across all 11 providers (AI, scrapers, communications, databases).
+- **Response `200 OK`**:
+```json
+{
+  "providers": [
+    {
+      "provider_name": "gemini",
+      "status": "HEALTHY",
+      "is_configured": true,
+      "is_enabled": true,
+      "last_success_at": "2026-11-03T02:45:10Z",
+      "last_failure_at": null,
+      "consecutive_failures": 0,
+      "last_error_message": null,
+      "details": { "model": "gemini-1.5-flash", "quota": "standard" }
+    },
+    {
+      "provider_name": "gmail",
+      "status": "CONFIGURED",
+      "is_configured": true,
+      "is_enabled": true,
+      "last_success_at": null,
+      "last_failure_at": null,
+      "consecutive_failures": 0,
+      "last_error_message": null,
+      "details": { "mode": "oauth_live" }
+    }
+  ],
+  "total": 11
 }
 ```
 
-#### `GET /stats`
-
-Get platform statistics.
-
-**Response:**
+#### `GET /api/v1/integrations/health`
+Aggregated high-level health metrics for system health widgets.
+- **Response `200 OK`**:
 ```json
 {
-  "total_leads": 1523,
-  "total_jobs": 45,
-  "emails_found": 892,
-  "phones_found": 1205,
-  "social_profiles_found": 734,
-  "jobs_completed": 42,
-  "jobs_failed": 2,
-  "jobs_running": 1
+  "overall_status": "HEALTHY",
+  "total_providers": 11,
+  "healthy": 9,
+  "degraded": 1,
+  "offline": 1,
+  "disabled": 0
+}
+```
+
+#### `POST /api/v1/integrations/{provider_name}/validate`
+Triggers an immediate connection probe against a specific provider.
+- **Path Parameters**: `provider_name` (`gemini`, `openrouter`, `serpapi`, `apify`, `firecrawl`, `gmail`, `whatsapp`, `database`, `redis`, `celery`)
+- **Response `200 OK`**:
+```json
+{
+  "provider": "gemini",
+  "status": "HEALTHY",
+  "message": "Connection probe succeeded (latency: 142ms)",
+  "timestamp": "2026-11-03T02:48:00Z"
+}
+```
+
+#### `POST /api/v1/integrations/{provider_name}/toggle`
+Enables or disables a provider without requiring server restart.
+- **Request Body**:
+```json
+{
+  "is_enabled": false
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "provider": "openrouter",
+  "is_enabled": false,
+  "status": "DISABLED"
 }
 ```
 
 ---
 
-### Discovery Jobs
+### 2.2. Lead Discovery & Scanners
 
-#### `POST /discovery/jobs`
-
-Create a new business discovery job.
-
-**Request Body:**
+#### `POST /api/v1/discovery/jobs`
+Submits a background lead discovery job across maps and search directories.
+- **Request Body**:
 ```json
 {
-  "query": "dentists",
-  "location": "Lucknow, India",
-  "radius_km": 10,
-  "limit": 50,
-  "sources": ["maps"],
-  "enrich_emails": true,
-  "enrich_phones": true,
-  "enrich_socials": true,
-  "preferred_provider": "apify"
+  "query": "Solar panel installation contractors",
+  "location": "Phoenix, AZ",
+  "latitude": 33.4484,
+  "longitude": -112.0740,
+  "radius_km": 25.0,
+  "max_results": 40
+}
+```
+- **Response `201 Created`**:
+```json
+{
+  "job_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "status": "pending",
+  "query": "Solar panel installation contractors",
+  "location": "Phoenix, AZ",
+  "created_at": "2026-11-03T02:50:00Z"
 }
 ```
 
-**Parameters:**
-- `query` (required): Business category or keyword
-- `location` (required): City, state, country
-- `radius_km` (optional): Search radius in kilometers (0-100)
-- `limit` (optional): Maximum results (1-500, default: 50)
-- `sources` (optional): Discovery sources (default: ["maps"])
-- `enrich_emails` (optional): Extract emails (default: true)
-- `enrich_phones` (optional): Extract phones (default: true)
-- `enrich_socials` (optional): Extract socials (default: true)
-- `preferred_provider` (optional): Provider name (apify, outscraper, google_places)
-
-**Response:**
+#### `GET /api/v1/discovery/jobs/{job_id}`
+Polls status and discovery counts for an active or completed job.
+- **Response `200 OK`**:
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "search_query": "dentists",
-  "location": "Lucknow, India",
-  "radius_km": 10,
-  "requested_limit": 50,
-  "provider": "apify",
-  "status": "QUEUED",
-  "total_found": 0,
-  "total_enriched": 0,
-  "created_at": "2024-01-15T10:30:00Z",
-  "completed_at": null
+  "job_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "status": "completed",
+  "total_found": 38,
+  "created_at": "2026-11-03T02:50:00Z",
+  "completed_at": "2026-11-03T02:51:15Z"
 }
 ```
 
-#### `GET /discovery/jobs/{job_id}`
-
-Get job status and details.
-
-**Response:**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "search_query": "dentists",
-  "location": "Lucknow, India",
-  "radius_km": 10,
-  "requested_limit": 50,
-  "provider": "apify",
-  "provider_job_id": "apify_run_abc123",
-  "status": "COMPLETED",
-  "total_found": 48,
-  "total_enriched": 42,
-  "error_message": null,
-  "created_at": "2024-01-15T10:30:00Z",
-  "completed_at": "2024-01-15T10:35:30Z"
-}
+#### `GET /api/v1/discovery/stream/{job_id}`
+Server-Sent Events (SSE) live stream yielding discovered lead records as they are parsed.
+- **Headers**: `Accept: text/event-stream`
+- **Output Format**: Continuous SSE event frames:
+```text
+event: lead_found
+data: {"name": "Desert Sun Solar", "phone": "+1-602-555-0199", "website": "https://desertsunsolar.com"}
 ```
 
-**Job Status Values:**
-- `QUEUED`: Job created, waiting to start
-- `RUNNING`: Job is currently executing
-- `COMPLETED`: Job finished successfully
-- `FAILED`: Job failed (check error_message)
-- `CANCELLED`: Job was cancelled
+---
 
-#### `GET /discovery/jobs`
+### 2.3. Lead Management, Qualification & Intelligence
 
-List discovery jobs with pagination.
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `page_size` (optional): Items per page (1-100, default: 20)
-- `status` (optional): Filter by status
-
-**Response:**
+#### `GET /api/v1/leads`
+Lists discovered leads with filtering, search, and pagination.
+- **Query Parameters**:
+  - `search` (optional string): Keyword search in name or city
+  - `status` (optional string): Filter by `new`, `contacted`, `converted`
+  - `qualification_status` (optional string): `Qualified`, `Maybe`, `Rejected`, `New`
+  - `limit` (integer, default 50)
+  - `offset` (integer, default 0)
+- **Response `200 OK`**:
 ```json
 {
   "items": [
     {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "search_query": "dentists",
-      "location": "Lucknow, India",
-      "status": "COMPLETED",
-      "total_found": 48,
-      "total_enriched": 42,
-      "created_at": "2024-01-15T10:30:00Z"
+      "id": "e4b3e839-a9a7-4b13-94cb-55d8d4745863",
+      "name": "Desert Sun Solar",
+      "city": "Phoenix",
+      "state": "AZ",
+      "phone": "+1-602-555-0199",
+      "website": "https://desertsunsolar.com",
+      "rating": 4.8,
+      "qualification_score": 86.5,
+      "qualification_status": "Qualified",
+      "created_at": "2026-11-03T02:50:15Z"
     }
   ],
-  "total": 45,
-  "page": 1,
-  "page_size": 20,
-  "total_pages": 3
+  "total": 1
+}
+```
+
+#### `GET /api/v1/leads/{id}`
+Returns complete lead record including contacts, social profiles, source evidence, and intelligence dossier.
+- **Response `200 OK`**: Full `BusinessLead` schema with nested relations.
+
+#### `POST /api/v1/leads/{id}/qualify`
+Runs the AI Lead Qualification Engine evaluating the lead across 5 configurable ICP factors.
+- **Request Body** (optional weight overrides):
+```json
+{
+  "weights": {
+    "icp_fit": 0.30,
+    "pain_points": 0.25,
+    "timing_intent": 0.20,
+    "reachability": 0.15,
+    "evidence_quality": 0.10
+  }
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "lead_id": "e4b3e839-a9a7-4b13-94cb-55d8d4745863",
+  "qualification_score": 88.0,
+  "qualification_status": "Qualified",
+  "reasoning": "Strong ICP fit for high-ticket commercial solar; active website with commercial contact information and high customer review presence.",
+  "breakdown": {
+    "icp_fit": 27.0,
+    "pain_points": 22.5,
+    "timing_intent": 16.0,
+    "reachability": 13.5,
+    "evidence_quality": 9.0
+  },
+  "recommended_action": "Draft personalized email outreach offering B2B lead generation audit."
+}
+```
+
+#### `POST /api/v1/leads/{id}/research`
+Executes deep digital footprint discovery and builds the structured Company Intelligence dossier.
+- **Response `200 OK`**:
+```json
+{
+  "lead_id": "e4b3e839-a9a7-4b13-94cb-55d8d4745863",
+  "verified_facts": {
+    "company_name": "Desert Sun Solar LLC",
+    "verified_phone": "+1-602-555-0199",
+    "address": "4100 N 24th St, Phoenix, AZ",
+    "detected_technologies": ["WordPress", "Google Analytics", "Calendly"]
+  },
+  "inferred_insights": {
+    "target_market": "High-volume residential & commercial installations",
+    "potential_pain_points": ["Manual lead booking bottlenecks", "High CPC Google Ads cost"],
+    "suggested_offering": "Automated inbound lead qualification and appointment routing"
+  },
+  "unknowns": [
+    "Full-time employee count",
+    "Exact monthly advertising spend",
+    "Direct mobile for managing director"
+  ]
+}
+```
+
+#### `POST /api/v1/leads/{id}/feedback`
+Records manual human score override and feedback with compliance audit logging.
+- **Request Body**:
+```json
+{
+  "score": 95.0,
+  "status": "Qualified",
+  "notes": "Verified directly via local industry association; high priority account."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "lead_id": "e4b3e839-a9a7-4b13-94cb-55d8d4745863",
+  "new_score": 95.0,
+  "status": "Qualified",
+  "audit_logged": true
+}
+```
+
+#### `POST /api/v1/leads/manual`
+Creates a new lead manually through the user interface.
+- **Request Body**:
+```json
+{
+  "name": "Apex Engineering",
+  "website": "https://apex-eng.io",
+  "phone": "+1-415-555-0182",
+  "city": "San Francisco",
+  "state": "CA",
+  "category": "Structural Engineering"
+}
+```
+- **Response `201 Created`**: Returns created `BusinessLead`.
+
+#### `POST /api/v1/leads/import/csv`
+Bulk imports leads from a user-supplied CSV file with deduplication.
+- **Form Data**: `file` (multipart/form-data CSV)
+- **Response `200 OK`**:
+```json
+{
+  "total_rows": 120,
+  "imported": 114,
+  "duplicates_skipped": 6,
+  "errors": []
 }
 ```
 
 ---
 
-### Leads
+### 2.4. Full Relational CRM Engine
 
-#### `GET /leads`
-
-List business leads with filtering and pagination.
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `page_size` (optional): Items per page (1-100, default: 20)
-- `search` (optional): Search in business name and category
-- `category` (optional): Filter by category
-- `city` (optional): Filter by city
-- `has_email` (optional): Filter by email availability (true/false)
-- `has_phone` (optional): Filter by phone availability (true/false)
-- `has_social` (optional): Filter by social profile availability (true/false)
-
-**Example:**
-```
-GET /leads?city=Lucknow&has_email=true&page=1&page_size=20
-```
-
-**Response:**
+#### `POST /api/v1/crm/companies/convert-from-lead/{lead_id}`
+1-Click conversion promoting a discovered lead into a full CRM `Company`, creating an associated `Contact` and an open `Deal` in the default sales pipeline.
+- **Response `201 Created`**:
 ```json
 {
-  "items": [
-    {
-      "id": "650e8400-e29b-41d4-a716-446655440001",
-      "business_name": "ABC Dental Clinic",
-      "category": "Dentist",
-      "description": "Professional dental care services",
-      "address": "123 Main Street",
-      "city": "Lucknow",
-      "state": "Uttar Pradesh",
-      "country": "India",
-      "website": "https://abcdental.com",
-      "source_provider": "apify",
-      "status": "enriched",
-      "email_count": 2,
-      "phone_count": 3,
-      "social_count": 4,
-      "created_at": "2024-01-15T10:32:15Z",
-      "updated_at": "2024-01-15T10:33:45Z"
-    }
-  ],
-  "total": 48,
-  "page": 1,
-  "page_size": 20,
-  "total_pages": 3
+  "company": {
+    "id": "c1f7b091-628d-4cb5-b44c-9f8fa1604a11",
+    "name": "Desert Sun Solar",
+    "domain": "desertsunsolar.com"
+  },
+  "contact": {
+    "id": "d82efba1-381c-4b68-809f-e6eb20bdae03",
+    "email": "contact@desertsunsolar.com"
+  },
+  "deal": {
+    "id": "a931a292-628f-40f4-8a40-349f99bc7b2e",
+    "title": "Desert Sun Solar — Inbound Automation",
+    "amount": 5000.0,
+    "status": "open"
+  }
 }
 ```
 
-#### `GET /leads/{lead_id}`
-
-Get detailed lead information.
-
-**Response:**
+#### `GET /api/v1/crm/deals/kanban`
+Retrieves pipeline stages and their grouped deals with total stage financial amounts.
+- **Response `200 OK`**:
 ```json
 {
-  "id": "650e8400-e29b-41d4-a716-446655440001",
-  "business_name": "ABC Dental Clinic",
-  "category": "Dentist",
-  "description": "Professional dental care services",
-  "address": "123 Main Street",
-  "city": "Lucknow",
-  "state": "Uttar Pradesh",
-  "country": "India",
-  "website": "https://abcdental.com",
-  "source_provider": "apify",
-  "status": "enriched",
-  "created_at": "2024-01-15T10:32:15Z",
-  "updated_at": "2024-01-15T10:33:45Z",
-  "contacts": [
+  "stages": [
     {
-      "id": "750e8400-e29b-41d4-a716-446655440002",
-      "contact_type": "EMAIL",
-      "original_value": "info@abcdental.com",
-      "normalized_value": "info@abcdental.com",
-      "verification_status": "unverified",
-      "source_url": "https://abcdental.com/contact",
-      "collected_at": "2024-01-15T10:33:20Z"
+      "id": "stage-uuid-1",
+      "name": "Lead",
+      "order_index": 0,
+      "total_amount": 15000.0,
+      "deals": [
+        {
+          "id": "a931a292-628f-40f4-8a40-349f99bc7b2e",
+          "title": "Desert Sun Solar — Inbound Automation",
+          "amount": 5000.0,
+          "company_name": "Desert Sun Solar"
+        }
+      ]
     },
     {
-      "id": "750e8400-e29b-41d4-a716-446655440003",
-      "contact_type": "PHONE",
-      "original_value": "+91 9876543210",
-      "normalized_value": "+919876543210",
-      "verification_status": "unverified",
-      "source_url": "https://abcdental.com",
-      "collected_at": "2024-01-15T10:33:20Z"
-    }
-  ],
-  "social_profiles": [
-    {
-      "id": "850e8400-e29b-41d4-a716-446655440004",
-      "platform": "INSTAGRAM",
-      "profile_url": "https://www.instagram.com/abcdental/",
-      "verification_status": "unverified",
-      "source_url": "https://abcdental.com",
-      "collected_at": "2024-01-15T10:33:25Z"
-    },
-    {
-      "id": "850e8400-e29b-41d4-a716-446655440005",
-      "platform": "FACEBOOK",
-      "profile_url": "https://www.facebook.com/abcdental/",
-      "verification_status": "unverified",
-      "source_url": "https://abcdental.com",
-      "collected_at": "2024-01-15T10:33:25Z"
+      "id": "stage-uuid-2",
+      "name": "Qualified",
+      "order_index": 1,
+      "total_amount": 28000.0,
+      "deals": []
     }
   ]
 }
 ```
 
-#### `POST /leads/{lead_id}/enrich`
-
-Enrich a single lead.
-
-**Response:**
+#### `PUT /api/v1/crm/deals/{deal_id}/stage`
+Transitions a deal to a new pipeline stage and logs an activity event.
+- **Request Body**:
 ```json
 {
-  "message": "Lead enriched successfully",
-  "lead_id": "650e8400-e29b-41d4-a716-446655440001"
+  "stage_id": "stage-uuid-2",
+  "status": "open"
 }
 ```
+- **Response `200 OK`**: Updated deal object.
 
-**Error Response (400):**
-```json
-{
-  "detail": "Lead has no website to enrich"
-}
-```
+#### `GET /api/v1/crm/companies` & `POST /api/v1/crm/companies`
+Standard REST CRUD endpoints for CRM companies.
 
-#### `GET /leads/export/csv`
+#### `GET /api/v1/crm/contacts` & `POST /api/v1/crm/contacts`
+Standard REST CRUD endpoints for CRM contacts.
 
-Export leads to CSV format.
+#### `GET /api/v1/crm/tasks` & `POST /api/v1/crm/tasks`
+Creates and manages CRM tasks with priorities (`low`, `medium`, `high`, `urgent`) and due dates.
 
-**Query Parameters:** Same as `GET /leads`
+#### `PUT /api/v1/crm/tasks/{id}/complete`
+Marks a task as completed.
 
-**Response:** CSV file download
-
-```csv
-business_name,category,address,city,state,country,website,email_count,phone_count,social_count,source_provider,created_at
-ABC Dental Clinic,Dentist,"123 Main Street",Lucknow,Uttar Pradesh,India,https://abcdental.com,2,3,4,apify,2024-01-15T10:32:15Z
-```
+#### `GET /api/v1/crm/meetings` & `POST /api/v1/crm/meetings`
+Schedules sales calls with attendee links and AI-synthesized briefing notes.
 
 ---
 
-## Error Responses
+### 2.5. AI Outreach Engine & Human Approval Queue
 
-### 400 Bad Request
-
+#### `GET /api/v1/outreach/approvals`
+Lists outbound drafts awaiting human review.
+- **Query Parameters**: `status` (optional string, defaults to `pending`)
+- **Response `200 OK`**:
 ```json
 {
-  "detail": "Validation error message"
-}
-```
-
-### 404 Not Found
-
-```json
-{
-  "detail": "Resource not found"
-}
-```
-
-### 500 Internal Server Error
-
-```json
-{
-  "detail": "Internal server error message"
-}
-```
-
----
-
-## Rate Limiting
-
-Currently not implemented in MVP. Future versions will include:
-- 60 requests per minute per IP
-- 1000 requests per day per user
-
----
-
-## Examples
-
-### Complete Discovery Flow
-
-```python
-import httpx
-import time
-
-# 1. Create discovery job
-response = httpx.post(
-    "http://localhost:8000/api/v1/discovery/jobs",
-    json={
-        "query": "dentists",
-        "location": "Lucknow, India",
-        "limit": 20,
-        "enrich_emails": True,
-        "enrich_phones": True,
-        "enrich_socials": True
+  "items": [
+    {
+      "id": "673f4e10-388a-4c28-98f5-93df92d47aa1",
+      "contact_id": "d82efba1-381c-4b68-809f-e6eb20bdae03",
+      "channel": "email",
+      "recipient_address": "contact@desertsunsolar.com",
+      "subject": "Boosting Inbound Booking Conversion for Desert Sun Solar",
+      "body_content": "Hi Team,\n\nI noticed Desert Sun Solar's impressive reviews in Phoenix...",
+      "status": "pending",
+      "created_at": "2026-11-03T03:00:00Z"
     }
-)
-job = response.json()
-job_id = job["id"]
-
-# 2. Poll for completion
-while True:
-    response = httpx.get(f"http://localhost:8000/api/v1/discovery/jobs/{job_id}")
-    job = response.json()
-    
-    if job["status"] in ["COMPLETED", "FAILED"]:
-        break
-    
-    print(f"Status: {job['status']}, Found: {job['total_found']}")
-    time.sleep(5)
-
-# 3. Get leads
-if job["status"] == "COMPLETED":
-    response = httpx.get(
-        "http://localhost:8000/api/v1/leads",
-        params={"city": "Lucknow", "page_size": 50}
-    )
-    leads = response.json()
-    print(f"Total leads: {leads['total']}")
+  ],
+  "total": 1
+}
 ```
 
-### Filter Leads
+#### `POST /api/v1/outreach/approvals/{id}/approve`
+Authorizes and immediately sends an outbound email or WhatsApp message.
+- **Response `200 OK`**:
+```json
+{
+  "id": "673f4e10-388a-4c28-98f5-93df92d47aa1",
+  "status": "sent",
+  "sent_at": "2026-11-03T03:02:10Z",
+  "external_id": "gmail_msg_1928374a"
+}
+```
 
-```python
-# Get leads with emails in Lucknow
-response = httpx.get(
-    "http://localhost:8000/api/v1/leads",
-    params={
-        "city": "Lucknow",
-        "has_email": True,
-        "page": 1,
-        "page_size": 20
+#### `POST /api/v1/outreach/approvals/{id}/reject`
+Rejects a draft, preventing delivery and logging operator feedback.
+- **Request Body**:
+```json
+{
+  "reason": "Value proposition was too generic; needs mention of commercial roofing."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "id": "673f4e10-388a-4c28-98f5-93df92d47aa1",
+  "status": "rejected",
+  "rejection_reason": "Value proposition was too generic; needs mention of commercial roofing."
+}
+```
+
+#### `PUT /api/v1/outreach/approvals/{id}/edit`
+Allows operator to modify draft text before sending.
+- **Request Body**:
+```json
+{
+  "subject": "New Subject Line",
+  "body_content": "Updated body copy..."
+}
+```
+- **Response `200 OK`**: Updated approval record.
+
+#### `POST /api/v1/outreach/draft`
+Prompts the Email Personalization Agent to draft a personalized message and stage it in the approval queue.
+- **Request Body**:
+```json
+{
+  "contact_id": "d82efba1-381c-4b68-809f-e6eb20bdae03",
+  "channel": "email",
+  "campaign_id": null
+}
+```
+- **Response `201 Created`**: Created approval draft in `pending` state.
+
+#### `GET /api/v1/outreach/suppression` & `POST /api/v1/outreach/suppression`
+Manages the global suppression list. Any email or phone added here is blocked from outreach.
+
+#### `GET /api/v1/outreach/conversations`
+Retrieves threaded messaging histories across Gmail and WhatsApp.
+
+---
+
+### 2.6. Multi-Agent Orchestration & Telemetry
+
+#### `GET /api/v1/agents`
+Lists the 15 specialized agents, their descriptions, and registered tools.
+- **Response `200 OK`**: Array of 15 agent descriptors.
+
+#### `POST /api/v1/agents/{agent_name}/execute`
+Directly invokes an individual specialized agent.
+- **Request Body**:
+```json
+{
+  "prompt": "Analyze lead Acme Corp and evaluate ICP fit.",
+  "context": { "lead_id": "e4b3e839-a9a7-4b13-94cb-55d8d4745863" }
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "agent_name": "lead_qualification_agent",
+  "provider_used": "gemini",
+  "response": "Acme Corp demonstrates an ICP score of 88/100...",
+  "tools_called": ["search_leads_db", "calculate_icp_score"],
+  "execution_time_ms": 780.2
+}
+```
+
+#### `POST /api/v1/agents/workflow`
+Invokes the Master Orchestrator to decompose an objective into multi-step actions.
+- **Request Body**:
+```json
+{
+  "goal": "Discover 10 dental clinics in Austin, qualify them, and prepare outreach drafts."
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "workflow_id": "wf-849102",
+  "total_steps": 3,
+  "steps_completed": 3,
+  "results": [
+    { "step": 1, "agent": "lead_discovery_agent", "status": "completed" },
+    { "step": 2, "agent": "lead_qualification_agent", "status": "completed" },
+    { "step": 3, "agent": "email_personalization_agent", "status": "staged_for_approval" }
+  ]
+}
+```
+
+#### `GET /api/v1/agents/runs`
+Returns telemetry execution logs across all agent invocations.
+
+---
+
+### 2.7. Knowledge Base & Hybrid RAG
+
+#### `GET /api/v1/knowledge/documents` & `POST /api/v1/knowledge/documents`
+Lists and uploads documents (playbooks, offerings, case studies) for semantic indexing.
+
+#### `POST /api/v1/knowledge/search`
+Hybrid vector cosine similarity + lexical keyword search.
+- **Request Body**:
+```json
+{
+  "query": "pricing model for outbound sales automation",
+  "top_k": 3
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "results": [
+    {
+      "document_id": "doc-uuid-1",
+      "document_title": "Agency Pricing & Packaging Playbook",
+      "chunk_text": "Our outbound automation retainer begins at $3,500/month...",
+      "score": 0.89
     }
-)
-
-# Search for specific category
-response = httpx.get(
-    "http://localhost:8000/api/v1/leads",
-    params={
-        "search": "dental",
-        "has_phone": True
-    }
-)
-```
-
-### Export to CSV
-
-```python
-response = httpx.get(
-    "http://localhost:8000/api/v1/leads/export/csv",
-    params={"city": "Lucknow", "has_email": True}
-)
-
-with open("leads.csv", "wb") as f:
-    f.write(response.content)
+  ]
+}
 ```
 
 ---
 
-## Webhooks (Future)
+### 2.8. Calculated Business Analytics
 
-Planned webhook endpoints for real-time notifications:
-
-- `job.started` - Discovery job started
-- `job.completed` - Discovery job completed
-- `job.failed` - Discovery job failed
-- `lead.discovered` - New lead discovered
-- `lead.enriched` - Lead enriched with contacts
-
----
-
-## API Versioning
-
-Current version: `v1`
-
-Future versions will be backward compatible or released as `v2`, `v3`, etc.
-
----
-
-## Support
-
-For API issues or questions:
-1. Check interactive documentation at `/docs`
-2. Review error messages
-3. Check provider configuration
-4. Open an issue on GitHub
+#### `GET /api/v1/analytics/overview`
+Returns real computed business KPIs computed directly from database records.
+- **Response `200 OK`**:
+```json
+{
+  "leads": {
+    "total": 154,
+    "qualified": 42,
+    "rejected": 12,
+    "avg_score": 74.2
+  },
+  "pipeline": {
+    "open_deals": 18,
+    "open_value": 92500.0,
+    "won_deals": 5,
+    "won_value": 24000.0,
+    "win_rate_percent": 21.7
+  },
+  "operations": {
+    "pending_approvals": 6,
+    "tasks_due": 4,
+    "meetings_scheduled": 3
+  },
+  "ai_telemetry": {
+    "total_agent_runs": 87,
+    "success_rate_percent": 98.8,
+    "avg_execution_ms": 640.5
+  }
+}
+```

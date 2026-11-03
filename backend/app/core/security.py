@@ -158,3 +158,68 @@ def normalize_phone_number(phone: str, region: str = "IN") -> Optional[str]:
         
     except Exception:
         return None
+
+
+import hmac
+import hashlib
+import secrets
+from fastapi import HTTPException, Security, status
+from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+http_bearer = HTTPBearer(auto_error=False)
+
+
+def verify_api_key(
+    api_key_header_val: Optional[str] = Security(api_key_header),
+    bearer_creds: Optional[HTTPAuthorizationCredentials] = Security(http_bearer)
+) -> bool:
+    """
+    Authenticate requests using X-API-Key header or Bearer token.
+    If AUTH_ENABLED is False (development/testing default), allows request through.
+    """
+    if not settings.AUTH_ENABLED:
+        return True
+
+    provided_key = None
+    if api_key_header_val:
+        provided_key = api_key_header_val
+    elif bearer_creds:
+        provided_key = bearer_creds.credentials
+
+    if not provided_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided. Pass 'X-API-Key' or 'Authorization: Bearer <token>' header.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Constant time comparison to prevent timing attacks
+    expected_key = settings.ADMIN_API_KEY.encode("utf-8")
+    actual_key = provided_key.encode("utf-8")
+
+    if not hmac.compare_digest(expected_key, actual_key):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid authentication credentials.",
+        )
+
+    return True
+
+
+def hash_secret(secret: str) -> str:
+    """Hash a secret/password with salt using SHA-256."""
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((salt + secret).encode("utf-8")).hexdigest()
+    return f"{salt}${hashed}"
+
+
+def verify_secret(secret: str, stored_hash: str) -> bool:
+    """Verify secret against stored salt$hash."""
+    try:
+        salt, expected_hash = stored_hash.split("$", 1)
+        actual_hash = hashlib.sha256((salt + secret).encode("utf-8")).hexdigest()
+        return hmac.compare_digest(expected_hash, actual_hash)
+    except Exception:
+        return False
+

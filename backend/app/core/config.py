@@ -64,9 +64,32 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_MODEL: str = "google/gemini-2.0-flash-001"
+    DEFAULT_AI_PROVIDER: str = "gemini"
+    EMBEDDING_PROVIDER: str = "gemini"
 
-    # Security
-    SECRET_KEY: str = "change-this-secret-key-in-production"
+    # Communication Providers: Email (Gmail) & WhatsApp
+    GMAIL_CLIENT_ID: Optional[str] = None
+    GMAIL_CLIENT_SECRET: Optional[str] = None
+    GMAIL_REFRESH_TOKEN: Optional[str] = None
+    GMAIL_REDIRECT_URI: str = "http://localhost:8000/api/v1/integrations/gmail/callback"
+    GMAIL_SENDER_EMAIL: Optional[str] = None
+
+    WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
+    WHATSAPP_ACCESS_TOKEN: Optional[str] = None
+    WHATSAPP_VERIFY_TOKEN: str = "crm_whatsapp_verify_token_default"
+    WHATSAPP_BUSINESS_ACCOUNT_ID: Optional[str] = None
+
+    # Lead Qualification Weights (Default 25/25/20/15/15)
+    ICP_WEIGHT_FIT: float = 0.25
+    ICP_WEIGHT_PAIN: float = 0.25
+    ICP_WEIGHT_TIMING: float = 0.20
+    ICP_WEIGHT_REACHABILITY: float = 0.15
+    ICP_WEIGHT_EVIDENCE: float = 0.15
+
+    # Security & Auth
+    SECRET_KEY: str = "development-secret-key-change-in-production-ai-sales-crm-os"
+    ADMIN_API_KEY: str = "dev-admin-key-ai-sales-crm"
+    AUTH_ENABLED: bool = False
     ALLOWED_ORIGINS: List[str] = Field(
         default=[
             "http://localhost:5173",

@@ -18,6 +18,7 @@ import {
   Globe,
   MapPin,
   Share2,
+  Building2,
 } from 'lucide-react';
 import { useLead } from '../hooks/useLeads';
 import api from '../services/api';
@@ -128,24 +129,75 @@ const LeadDetail = () => {
           Back to Leads
         </Link>
 
-        {/* Deep Scan Button */}
-        <button
-          onClick={handleDeepScan}
-          disabled={isScanning}
-          className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md text-sm transition-all disabled:opacity-50"
-        >
-          {isScanning ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Running Deep Multi-Source Scan...
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 mr-1.5 fill-white" />
-              ⚡ Deep AI Scan & Enrich
-            </>
-          )}
-        </button>
+        {/* Deep Scan, Qualify & CRM Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={async () => {
+              try {
+                setScanMessage('Evaluating lead qualification against Ideal Customer Profile...');
+                const res = await api.post(`/leads/${id}/qualify`);
+                await refetch();
+                setScanMessage(`🎯 Qualified with Score ${res.data.qualification_score}/100 (${res.data.qualification_status})`);
+              } catch (e: any) {
+                alert(`Qualification error: ${e.response?.data?.detail || e.message}`);
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs shadow-sm transition-all"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            AI Qualify Lead
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const res = await api.post(`/crm/companies/convert-from-lead/${id}`);
+                await refetch();
+                alert(`Successfully converted to CRM Company '${res.data.company_name}' with initial deal!`);
+              } catch (e: any) {
+                alert(`Conversion error: ${e.response?.data?.detail || e.message}`);
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl text-xs shadow-sm transition-all"
+          >
+            <Building2 className="w-3.5 h-3.5 mr-1.5" />
+            Convert to CRM
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const res = await api.post(`/outreach/drafts/lead/${id}`);
+                alert(`Personalized outreach draft created and enqueued to Human Approval Queue! Approval ID: ${res.data.approval_id}`);
+              } catch (e: any) {
+                alert(`Draft error: ${e.response?.data?.detail || e.message}`);
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs shadow-sm transition-all"
+          >
+            <Mail className="w-3.5 h-3.5 mr-1.5" />
+            Draft Outreach
+          </button>
+
+          <button
+            onClick={handleDeepScan}
+            disabled={isScanning}
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md text-xs transition-all disabled:opacity-50"
+          >
+            {isScanning ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Zap className="w-3.5 h-3.5 mr-1.5 fill-white" />
+                Deep AI Scan
+              </>
+            )}
+          </button>
+        </div>
+
       </div>
 
       {scanMessage && (
