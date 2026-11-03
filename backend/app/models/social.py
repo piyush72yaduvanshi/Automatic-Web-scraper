@@ -151,3 +151,4 @@ class SocialPostMetric(Base):
 
     # Relationships
     post = relationship("SocialPost", back_populates="metrics")
+

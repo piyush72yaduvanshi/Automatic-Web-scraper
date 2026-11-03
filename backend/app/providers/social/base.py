@@ -53,3 +53,4 @@ class BaseSocialProvider(ABC):
         Returns impressions, reach, likes, comments, shares, clicks, etc.
         """
         pass
+

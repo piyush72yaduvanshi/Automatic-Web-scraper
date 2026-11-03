@@ -205,3 +205,4 @@ class FacebookProvider(BaseSocialProvider):
             "clicks": 0,
             "engagement_rate": 0.0,
         }
+

@@ -291,3 +291,4 @@ def test_social_api_endpoints(client: TestClient):
     res_ana = client.get("/api/v1/social/analytics")
     assert res_ana.status_code == 200
     assert "summary" in res_ana.json()
+

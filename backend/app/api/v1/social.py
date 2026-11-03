@@ -143,3 +143,4 @@ async def sync_platform_metrics(db: Session = Depends(get_db)):
         return await SocialService.sync_platform_metrics(db=db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

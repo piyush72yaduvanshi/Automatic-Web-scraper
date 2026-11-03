@@ -111,3 +111,4 @@ def downgrade() -> None:
     op.drop_table('social_automation_rules')
     op.drop_table('social_posts')
     op.drop_table('social_accounts')
+

@@ -916,3 +916,4 @@ Creative Brief for each platform must specify:
             db.add(rule)
         db.commit()
         logger.info("Seeded default social automation rules.")
+
