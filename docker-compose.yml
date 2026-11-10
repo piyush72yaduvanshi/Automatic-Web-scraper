@@ -82,7 +82,6 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-    restart: unless-stopped      start_period: 10s
     restart: unless-stopped
 
   # Database Migration Service
@@ -100,7 +99,7 @@ services:
         echo 'Migrations completed successfully'
       "
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/crm_leads
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/crm_leads
     depends_on:
       postgres:
         condition: service_healthy
@@ -137,7 +136,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       
       # Database - Use Docker service name
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/crm_leads
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/crm_leads
       DATABASE_POOL_SIZE: 20
       DATABASE_MAX_OVERFLOW: 10
       PGVECTOR_ENABLED: "true"
@@ -257,7 +256,7 @@ services:
       "
     environment:
       # Same as backend
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/crm_leads
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/crm_leads
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

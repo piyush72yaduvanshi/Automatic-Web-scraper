@@ -54,6 +54,7 @@ const ReportsView = lazy(() =>
 const ExceptionQueueView = lazy(() =>
   import('./pages/ExceptionQueueView').then((m) => ({ default: m.ExceptionQueueView }))
 );
+const MonitoringDashboard = lazy(() => import('./pages/MonitoringDashboard'));
 
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -100,6 +101,7 @@ function App() {
             <Route path="deliverability" element={<DeliverabilityView />} />
             <Route path="compliance" element={<ComplianceView />} />
             <Route path="exceptions" element={<ExceptionQueueView />} />
+            <Route path="monitoring" element={<MonitoringDashboard />} />
             <Route path="reports" element={<ReportsView />} />
             <Route path="agents" element={<AIAgents />} />
             <Route path="knowledge" element={<KnowledgeBase />} />
