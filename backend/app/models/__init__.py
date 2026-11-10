@@ -6,6 +6,14 @@ from app.models.lead_contact import LeadContact, ContactType
 from app.models.lead_social_profile import LeadSocialProfile, SocialPlatform
 from app.models.discovery_job import DiscoveryJob, JobStatus
 from app.models.lead_source_evidence import LeadSourceEvidence
+from app.models.discovery_schedule import (
+    DiscoverySchedule,
+    DiscoveryTarget,
+    DiscoveryRun,
+    ScheduleType,
+    TargetType,
+    DiscoveryRunStatus,
+)
 
 # CRM Models
 from app.models.crm import (
@@ -142,4 +150,10 @@ __all__ = [
     "SocialPost",
     "SocialAutomationRule",
     "SocialPostMetric",
+    "DiscoverySchedule",
+    "DiscoveryTarget",
+    "DiscoveryRun",
+    "ScheduleType",
+    "TargetType",
+    "DiscoveryRunStatus",
 ]
