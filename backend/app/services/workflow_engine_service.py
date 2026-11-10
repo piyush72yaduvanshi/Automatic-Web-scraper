@@ -377,6 +377,7 @@ class WorkflowEngineService:
         db: Session,
         workflow_id: Optional[str] = None,
         status: Optional[str] = None,
+        trigger_event: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """Query workflow execution history."""
@@ -385,6 +386,8 @@ class WorkflowEngineService:
             q = q.filter(WorkflowExecution.workflow_id == uuid.UUID(str(workflow_id)))
         if status:
             q = q.filter(WorkflowExecution.status == status)
+        if trigger_event:
+            q = q.filter(WorkflowExecution.trigger_event == trigger_event)
 
         execs = q.order_by(WorkflowExecution.created_at.desc()).limit(limit).all()
         return [

@@ -48,14 +48,25 @@ async def trigger_workflow(
 def list_workflow_executions(
     workflow_id: Optional[str] = None,
     status: Optional[str] = None,
+    trigger_event: Optional[str] = None,
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
-    """Query workflow execution history and states."""
+    """
+    Query workflow execution history and states.
+    
+    - **workflow_id**: Filter by specific workflow ID
+    - **status**: Filter by execution status (RUNNING, COMPLETED, FAILED, etc.)
+    - **trigger_event**: Filter by trigger event (NEW_LEAD, UNSUBSCRIBE, REPLY_CLASSIFIED, MANUAL, etc.)
+    - **limit**: Maximum number of executions to return
+    
+    Returns execution history with workflow name, status, step results, and timestamps.
+    """
     return WorkflowEngineService.list_executions(
         db=db,
         workflow_id=workflow_id,
         status=status,
+        trigger_event=trigger_event,
         limit=limit,
     )
 

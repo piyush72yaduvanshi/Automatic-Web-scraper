@@ -6,6 +6,7 @@ from app.api.v1 import (
     health,
     stats,
     discovery,
+    discovery_schedules,
     leads,
     integrations,
     crm,
@@ -33,6 +34,7 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(stats.router)
 api_router.include_router(discovery.router)
+api_router.include_router(discovery_schedules.router)
 api_router.include_router(leads.router)
 api_router.include_router(integrations.router)
 api_router.include_router(crm.router)
