@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "API rate limiting implementation - Add request rate limiting middleware to FastAPI application to prevent abuse. Implement per-endpoint rate limits using slowapi library with Redis backend for distributed rate limiting across workers.",
+  "status": "pending",
+  "steps": [
+    "Add slowapi==0.1.9 and limits==3.7.0 to backend/requirements.txt",
+    "Create backend/app/core/rate_limiter.py implementing rate limiter with Redis storage using existing REDIS_URL from settings",
+    "Create rate limit configuration in backend/app/core/config.py: Add RATE_LIMIT_DISCOVERY (10/minute), RATE_LIMIT_AI_AGENTS (20/minute), RATE_LIMIT_DEFAULT (60/minute)",
+    "Apply rate limiting middleware to FastAPI app in backend/main.py using SlowAPI, configure Redis backend",
+    "Add rate limit decorators to high-cost endpoints in backend/app/api/v1/discovery.py (10 requests per minute), backend/app/api/v1/agents.py (20 requests per minute), backend/app/api/v1/outreach.py (10 requests per minute)",
+    "Add rate limit exceeded exception handler in backend/main.py returning HTTP 429 with Retry-After header",
+    "Create tests in backend/tests/test_rate_limiting.py covering: exceeding limits returns 429, Retry-After header present, different limits per endpoint, Redis storage works",
+    "Document rate limits in backend/docs/API_RATE_LIMITS.md with table showing endpoint → limit mapping"
+  ],
+  "acceptance_criteria": [
+    "slowapi library integrated with Redis storage backend",
+    "Discovery endpoints limited to 10 requests per minute per IP",
+    "AI agent endpoints limited to 20 requests per minute per IP",
+    "All other endpoints limited to 60 requests per minute per IP",
+    "HTTP 429 returned when limit exceeded with Retry-After header",
+    "Rate limit state persisted in Redis (survives backend restart)",
+    "New test file test_rate_limiting.py with 5+ test cases all passing"
+  ],
+  "verification": [
+    "pip install -r backend/requirements.txt (installs slowapi successfully)",
+    "python backend/main.py (starts without errors, rate limiter initialized)",
+    "curl http://localhost:8000/api/v1/discovery/jobs (returns 200 first time)",
+    "Loop 15 times: curl http://localhost:8000/api/v1/discovery/jobs (11th request returns 429)",
+    "pytest backend/tests/test_rate_limiting.py -v (all tests pass)",
+    "Check Redis: docker exec -it crm_leads_redis redis-cli KEYS '*rate*' (shows rate limit keys)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

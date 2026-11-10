@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     # Database (Dialect-agnostic: supports postgresql+psycopg, postgresql+asyncpg, sqlite)
     DATABASE_URL: Union[PostgresDsn, str] = Field(
-        default="postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
+        default="postgresql+psycopg://postgres:postgres@localhost:5432/crm_leads"
     )
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
@@ -57,12 +57,8 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_database_url(cls, v):
         if not v:
-            return "postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
-        s = str(v)
-        # Handle default dev container credentials
-        if "postgres:postgres@localhost:5432" in s:
-            s = s.replace("postgres:postgres@localhost:5432", "postgres:postgres_dev_password_change_in_prod@localhost:5432")
-        return s
+            return "postgresql+psycopg://postgres:postgres@localhost:5432/crm_leads"
+        return str(v)
 
     # Redis
     REDIS_URL: Union[RedisDsn, str] = Field(

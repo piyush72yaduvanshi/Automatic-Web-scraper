@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Production security hardening - Secure docker-compose configuration, harden CORS policy, add resource limits, implement secure secrets management pattern, and add security headers middleware to FastAPI.",
+  "status": "pending",
+  "steps": [
+    "Update docker-compose.yml: Remove hardcoded postgres password 'postgres', use ${POSTGRES_PASSWORD:-change_me_in_production} environment variable for postgres service",
+    "Update docker-compose.yml: Remove hardcoded MinIO credentials, use ${MINIO_ROOT_USER} and ${MINIO_ROOT_PASSWORD} environment variables",
+    "Update docker-compose.yml: Add resource limits to all services (backend: memory 512M, celery_worker: memory 256M, frontend: memory 256M, postgres: memory 1G, redis: memory 256M)",
+    "Update docker-compose.yml: Add restart policies 'unless-stopped' to all services",
+    "Update backend/app/core/config.py: Change ALLOWED_ORIGINS field_validator to reject overly permissive regex in production - only allow exact domain matches when APP_ENV=production",
+    "Create backend/app/core/security.py with security headers middleware implementing HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, CSP headers",
+    "Add security headers middleware to backend/main.py after CORS middleware",
+    "Create .env.example files in backend/ and frontend/ with placeholder values and clear comments (never commit actual .env)",
+    "Update backend/README.md with section on secrets management: explain environment variables, .env.example usage, production secrets via AWS Secrets Manager or similar",
+    "Create backend/tests/test_security_hardening.py testing: CORS rejects unauthorized origins in production mode, security headers present in responses, resource limits applied to containers"
+  ],
+  "acceptance_criteria": [
+    "docker-compose.yml uses environment variables for all sensitive credentials (no hardcoded passwords)",
+    "All Docker services have memory and CPU limits defined",
+    "All Docker services have restart: unless-stopped policy",
+    "CORS configuration rejects unauthorized origins when APP_ENV=production",
+    "Security headers middleware adds 5+ security headers to all responses",
+    ".env.example files created with clear documentation",
+    "README.md documents secrets management approach",
+    "New security tests pass"
+  ],
+  "verification": [
+    "docker compose config (parses successfully with environment variable substitution)",
+    "grep -r 'postgres:postgres@' docker-compose.yml (returns no matches - no hardcoded passwords)",
+    "docker compose up -d (all services start with resource limits)",
+    "docker stats (shows memory limits enforced on containers)",
+    "curl -I http://localhost:8000/api/v1/health | grep 'X-Frame-Options' (security header present)",
+    "Set APP_ENV=production in backend/.env and restart backend, verify CORS rejects localhost origin",
+    "pytest backend/tests/test_security_hardening.py -v (all tests pass)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

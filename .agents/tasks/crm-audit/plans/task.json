@@ -1,0 +1,13 @@
+{
+  "task_id": "task-crm-production-optimization",
+  "task_description": "Complete CRM system audit findings remediation and production optimization across security, performance, monitoring, and operational readiness",
+  "status": "pending",
+  "feature_order": [
+    "FEAT-001",
+    "FEAT-002",
+    "FEAT-003",
+    "FEAT-004",
+    "FEAT-005"
+  ],
+  "blocked_reason": null
+}

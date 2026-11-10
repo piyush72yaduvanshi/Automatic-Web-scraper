@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "perf",
+  "description": "Database performance optimization - Add missing indexes on frequently queried columns (status, timestamps, foreign keys) across business_leads, companies, deals, contacts, activities, discovery_jobs, outreach_approvals, and conversations tables. Add pgvector ivfflat index for knowledge_chunks embedding similarity search.",
+  "status": "pending",
+  "steps": [
+    "Create Alembic migration file using `alembic revision -m 'add_performance_indexes'` in backend/ directory",
+    "In the upgrade() function, add 15 CREATE INDEX statements covering: business_leads (status, source_provider, qualification_score, created_at), companies (status), deals (status, stage_id), contacts (company_id), activities (company_id), discovery_jobs (status, created_at), outreach_approvals (status), conversations (status, last_message_at), knowledge_chunks (vector index using ivfflat with 100 lists)",
+    "In the downgrade() function, add corresponding DROP INDEX statements for all 15 indexes",
+    "Test migration: Run `alembic upgrade head` in backend/ directory with postgres running",
+    "Verify indexes created: Connect to PostgreSQL and run `\\d+ business_leads` to confirm indexes exist",
+    "Run backend test suite: `pytest tests/ -v` to ensure no regressions",
+    "Document the indexes in a new file backend/docs/DATABASE_INDEXES.md explaining each index purpose"
+  ],
+  "acceptance_criteria": [
+    "Alembic migration file created in backend/alembic/versions/ with unique revision ID",
+    "All 15 indexes successfully created when running `alembic upgrade head`",
+    "pgvector ivfflat index created on knowledge_chunks.embedding column",
+    "Migration is reversible - `alembic downgrade -1` removes all indexes",
+    "All existing pytest tests pass after migration",
+    "Query performance improvement measurable: SELECT with WHERE status= clause shows index usage in EXPLAIN ANALYZE"
+  ],
+  "verification": [
+    "cd backend && alembic upgrade head (should complete without errors)",
+    "docker exec -it crm_leads_postgres psql -U postgres -d crm_leads -c '\\d+ business_leads' (shows indexes)",
+    "docker exec -it crm_leads_postgres psql -U postgres -d crm_leads -c 'EXPLAIN ANALYZE SELECT * FROM business_leads WHERE status = \\'qualified\\';' (shows Index Scan)",
+    "cd backend && pytest tests/ -v (all tests pass)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
