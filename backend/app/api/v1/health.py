@@ -59,8 +59,8 @@ def health_check(db: Session = Depends(get_db)):
     ) and db_status == "healthy" else "degraded"
     
     return {
-        "status": overall_status,
-        "database": db_status,
+        "overall": overall_status,
+        "postgres": db_status,
         "redis": redis_status,
         "minio": minio_status,
         "version": "1.0.0",
