@@ -56,6 +56,10 @@ const ExceptionQueueView = lazy(() =>
 );
 const MonitoringDashboard = lazy(() => import('./pages/MonitoringDashboard'));
 
+// Phase 6 Automation UI
+const DiscoveryScheduler = lazy(() => import('./pages/DiscoveryScheduler'));
+const WorkflowMonitor = lazy(() => import('./pages/WorkflowMonitor'));
+
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px]">
     <div className="flex flex-col items-center gap-3">
@@ -86,6 +90,8 @@ function App() {
 
             {/* Automation & Sequences */}
             <Route path="workflows" element={<WorkflowEngineView />} />
+            <Route path="discovery-scheduler" element={<DiscoveryScheduler />} />
+            <Route path="workflow-monitor" element={<WorkflowMonitor />} />
             <Route path="campaigns" element={<CampaignsView />} />
             <Route path="sequences" element={<SequencesView />} />
             <Route path="outreach" element={<OutreachApprovals />} />

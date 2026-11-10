@@ -32,6 +32,7 @@ import {
   HardDrive,
   Cpu,
   Layers,
+  Activity,
 } from 'lucide-react';
 
 const Layout = () => {
@@ -63,6 +64,8 @@ const Layout = () => {
       label: 'Automation & Outreach',
       items: [
         { path: '/workflows', label: 'Native Workflows', icon: Workflow, badge: 'Zero n8n' },
+        { path: '/discovery-scheduler', label: 'Discovery Automation', icon: Target },
+        { path: '/workflow-monitor', label: 'Workflow Monitor', icon: Activity },
         { path: '/campaigns', label: 'Campaign Engine', icon: Target },
         { path: '/sequences', label: 'Follow-up Sequences', icon: ListOrdered },
         { path: '/outreach', label: 'Approval Queue', icon: Send },
