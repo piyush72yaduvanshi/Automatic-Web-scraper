@@ -28,6 +28,7 @@ class HealthResponse(BaseModel):
     status: str
     database: str
     redis: Optional[str] = None
+    minio: Optional[str] = None
     version: str
 
 

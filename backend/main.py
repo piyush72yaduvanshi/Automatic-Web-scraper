@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager
 import logging
+import uuid
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -9,12 +10,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1 import api_router
 from app.core.rate_limiter import limiter
 from app.core.security import SecurityHeadersMiddleware
+from app.core.monitoring import initialize_sentry
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v2.5.0")
     logger.info(f"Environment: {settings.APP_ENV}")
     logger.info(f"API Documentation: http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}/docs")
+    
+    # Initialize Sentry
+    if initialize_sentry():
+        logger.info("Sentry error tracking initialized")
+    
     try:
         from app.core.database import init_db
         init_db()
@@ -84,6 +92,19 @@ app.add_middleware(
 
 # Add security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Request ID middleware
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+# Prometheus metrics
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
