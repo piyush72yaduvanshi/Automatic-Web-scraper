@@ -208,7 +208,29 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
 
-    @field_validator("ALLOWED_ORIGINS", "BLOCKED_DOMAINS", mode="before")
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_and_validate_origins(cls, v):
+        """Parse and validate ALLOWED_ORIGINS with production wildcard protection."""
+        if isinstance(v, str):
+            import json
+            try:
+                origins = json.loads(v)
+            except Exception:
+                origins = [i.strip() for i in v.split(",") if i.strip()]
+        else:
+            origins = v
+        
+        # In production, reject wildcard patterns in origins
+        import os
+        if os.getenv("APP_ENV") == "production":
+            for origin in origins:
+                if "*" in origin and origin != "*":
+                    raise ValueError(f"Wildcard origins not allowed in production: {origin}")
+        
+        return origins
+
+    @field_validator("BLOCKED_DOMAINS", mode="before")
     @classmethod
     def parse_str_list(cls, v):
         if isinstance(v, str):
