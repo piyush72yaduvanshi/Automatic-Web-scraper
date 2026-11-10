@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1 import api_router
 from app.core.rate_limiter import limiter
+from app.core.security import SecurityHeadersMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
