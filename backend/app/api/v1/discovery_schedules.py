@@ -34,7 +34,7 @@ from app.schemas.discovery_schedule import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/api/v1/discovery",
+    prefix="/discovery-schedules",
     tags=["Discovery Automation"],
     dependencies=[Depends(verify_api_key)]
 )
