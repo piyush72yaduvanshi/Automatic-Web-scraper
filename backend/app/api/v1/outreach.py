@@ -7,6 +7,8 @@ import uuid
 
 from app.core.database import get_db
 from app.core.security import verify_api_key
+from app.core.rate_limiter import limiter
+from app.core.config import settings
 from app.services.outreach_service import OutreachService
 from app.providers.communication.whatsapp_provider import WhatsAppProvider
 
@@ -40,7 +42,9 @@ def list_approvals(status: Optional[str] = None, db: Session = Depends(get_db)):
 
 
 @router.post("/approvals/{approval_id}/approve")
+@limiter.limit(settings.RATE_LIMIT_OUTREACH)
 async def approve_outreach(
+    request: Request,
     approval_id: str,
     db: Session = Depends(get_db),
     _: bool = Depends(verify_api_key),
@@ -53,7 +57,9 @@ async def approve_outreach(
 
 
 @router.post("/approvals/{approval_id}/reject")
+@limiter.limit(settings.RATE_LIMIT_OUTREACH)
 def reject_outreach(
+    request: Request,
     approval_id: str,
     reason: str = Body("Rejected by user review", embed=True),
     db: Session = Depends(get_db),
@@ -88,7 +94,9 @@ def edit_outreach_draft(
 
 
 @router.post("/drafts/lead/{lead_id}")
+@limiter.limit(settings.RATE_LIMIT_OUTREACH)
 async def generate_lead_draft(
+    request: Request,
     lead_id: str,
     channel: str = Query("EMAIL"),
     db: Session = Depends(get_db),

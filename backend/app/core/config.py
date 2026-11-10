@@ -182,6 +182,10 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     RATE_LIMIT_BURST: int = 10
+    RATE_LIMIT_DISCOVERY: str = "10/minute"
+    RATE_LIMIT_AI_AGENTS: str = "20/minute"
+    RATE_LIMIT_OUTREACH: str = "10/minute"
+    RATE_LIMIT_DEFAULT: str = "60/minute"
 
     # Job Configuration
     MAX_RESULTS_PER_JOB: int = 500

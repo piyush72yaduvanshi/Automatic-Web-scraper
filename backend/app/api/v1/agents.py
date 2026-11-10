@@ -1,12 +1,14 @@
 """API endpoints for Specialized AI Agents and Orchestration."""
 
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 from sqlalchemy import desc
 
 from app.core.database import get_db
 from app.core.security import verify_api_key
+from app.core.rate_limiter import limiter
+from app.core.config import settings
 from app.ai.agents.specialized import AgentRegistry
 from app.ai.orchestrator.orchestrator import AIOrchestrator
 from app.models.orchestration import AgentRun
@@ -21,7 +23,9 @@ def list_agents():
 
 
 @router.post("/{agent_name}/execute")
+@limiter.limit(settings.RATE_LIMIT_AI_AGENTS)
 async def execute_agent(
+    request: Request,
     agent_name: str,
     payload: Dict[str, Any] = Body(default={}),
     db: Session = Depends(get_db),
@@ -37,7 +41,9 @@ async def execute_agent(
 
 
 @router.post("/workflow")
+@limiter.limit(settings.RATE_LIMIT_AI_AGENTS)
 async def run_workflow(
+    request: Request,
     payload: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
     _: bool = Depends(verify_api_key),

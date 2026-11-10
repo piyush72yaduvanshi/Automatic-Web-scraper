@@ -2,11 +2,13 @@
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Body, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.rate_limiter import limiter
+from app.core.config import settings
 from app.schemas.discovery import (
     DiscoveryJobCreate,
     DiscoveryJobResponse,
@@ -31,7 +33,9 @@ async def _execute_job_in_background(job_id: UUID, custom_ai_key: Optional[str] 
 
 
 @router.post("/jobs", response_model=DiscoveryJobResponse)
+@limiter.limit(settings.RATE_LIMIT_DISCOVERY)
 async def create_discovery_job(
+    request: Request,
     job_data: DiscoveryJobCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -93,7 +97,9 @@ def delete_discovery_job(
 
 
 @router.get("/scan/stream")
+@limiter.limit(settings.RATE_LIMIT_DISCOVERY)
 async def stream_discovery_scan(
+    request: Request,
     query: str = Query(..., min_length=1, description="Business category or keyword"),
     location: str = Query(..., min_length=1, description="City, state, country"),
     limit: int = Query(10, ge=1, le=50, description="Max businesses to scan"),
@@ -125,7 +131,9 @@ async def stream_discovery_scan(
 
 
 @router.post("/scan")
+@limiter.limit(settings.RATE_LIMIT_DISCOVERY)
 async def quick_scan(
+    request: Request,
     payload: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
 ):
