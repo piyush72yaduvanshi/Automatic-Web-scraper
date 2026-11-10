@@ -135,7 +135,7 @@ async def test_human_approval_queue_and_suppression(db, sample_business_data):
     assert res["success"] is True
 
     # 3. Suppression check
-    suppressed = OutreachService.add_to_suppression(
+    suppressed = await OutreachService.add_to_suppression(
         recipient="unsub@testbusiness.com",
         channel="ALL",
         reason="UNSUBSCRIBE",

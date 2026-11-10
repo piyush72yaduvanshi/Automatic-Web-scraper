@@ -27,6 +27,7 @@ from app.models.crm import Contact, Company, Activity
 from app.providers.communication.gmail_provider import GmailProvider
 from app.providers.communication.whatsapp_provider import WhatsAppProvider
 from app.ai.agents.specialized import AgentRegistry
+from app.services.workflow_engine_service import WorkflowEngineService
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class OutreachService:
         return False
 
     @classmethod
-    def add_to_suppression(
+    async def add_to_suppression(
         cls,
         recipient: str,
         channel: str = "ALL",
@@ -67,6 +68,22 @@ class OutreachService:
         db.add(suppression)
         db.commit()
         db.refresh(suppression)
+
+        # Emit UNSUBSCRIBE event for workflow automation
+        try:
+            await WorkflowEngineService.emit_event(
+                event_type="UNSUBSCRIBE",
+                payload={
+                    "recipient": clean,
+                    "channel": channel.upper(),
+                    "reason": reason,
+                },
+                db=db,
+            )
+            logger.info(f"✅ UNSUBSCRIBE event emitted for recipient={clean}, channel={channel}, reason={reason}")
+        except Exception as e:
+            logger.error(f"❌ Failed to emit UNSUBSCRIBE event for recipient={clean}: {e}")
+
         return suppression
 
     @classmethod

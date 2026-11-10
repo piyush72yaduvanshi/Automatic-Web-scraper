@@ -88,17 +88,21 @@ class ReplyIntelligenceService:
         )
 
         # 4. Emit workflow event for native Python automation bus
-        await WorkflowEngineService.emit_event(
-            event_type="REPLY_CLASSIFIED",
-            payload={
-                "sender": sender,
-                "conversation_id": str(conversation_id),
-                "classification": category,
-                "sentiment": sentiment,
-                "body_snippet": body_text[:200],
-            },
-            db=db,
-        )
+        try:
+            await WorkflowEngineService.emit_event(
+                event_type="REPLY_CLASSIFIED",
+                payload={
+                    "sender": sender,
+                    "conversation_id": str(conversation_id),
+                    "classification": category,
+                    "sentiment": sentiment,
+                    "body_snippet": body_text[:200],
+                },
+                db=db,
+            )
+            logger.info(f"✅ REPLY_CLASSIFIED event emitted: classification={category}, sender={sender}, sentiment={sentiment}")
+        except Exception as e:
+            logger.error(f"❌ Failed to emit REPLY_CLASSIFIED event for sender={sender}: {e}")
 
         return {
             "message_id": str(msg.id),

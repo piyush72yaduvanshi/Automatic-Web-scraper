@@ -177,7 +177,7 @@ async def quick_scan_business(
         domain = urlparse(website).netloc or website
         business_name = domain.replace("www.", "").split(".")[0].capitalize()
 
-    lead = LeadService.create_or_update_lead(db, {
+    lead = await LeadService.create_or_update_lead(db, {
         "business_name": business_name,
         "website": website,
         "category": category,
@@ -327,7 +327,7 @@ def submit_qualification_feedback(
 
 
 @router.post("/manual")
-def create_manual_lead(
+async def create_manual_lead(
     payload: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
 ):
@@ -348,7 +348,7 @@ def create_manual_lead(
         "source_provider": "manual_entry",
         "provider_external_id": f"manual_{uuid.uuid4().hex[:12]}",
     }
-    lead = LeadService.create_or_update_lead(db, lead_data)
+    lead = await LeadService.create_or_update_lead(db, lead_data)
 
     # Add contacts if provided
     if payload.get("email"):
@@ -378,7 +378,7 @@ def create_manual_lead(
 
 
 @router.post("/import/csv")
-def import_leads_csv(
+async def import_leads_csv(
     payload: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
 ):
@@ -403,7 +403,7 @@ def import_leads_csv(
             "source_provider": "csv_import",
             "provider_external_id": f"csv_{uuid.uuid4().hex[:12]}",
         }
-        lead = LeadService.create_or_update_lead(db, lead_data)
+        lead = await LeadService.create_or_update_lead(db, lead_data)
 
         email = row.get("email")
         if email:

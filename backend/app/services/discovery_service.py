@@ -144,7 +144,7 @@ class DiscoveryService:
             total_enriched = 0
             
             for b_data in businesses:
-                lead = LeadService.create_or_update_lead(db, b_data)
+                lead = await LeadService.create_or_update_lead(db, b_data)
                 
                 try:
                     enriched_data = await enricher.enrich_lead(
@@ -253,7 +253,7 @@ class DiscoveryService:
                 })
 
                 # Create/save lead in DB
-                lead = LeadService.create_or_update_lead(db, b_data)
+                lead = await LeadService.create_or_update_lead(db, b_data)
 
                 # Enrich via multi-source engine
                 try:

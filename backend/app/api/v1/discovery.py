@@ -166,7 +166,7 @@ async def quick_scan(
     enriched_leads = []
 
     for b_data in businesses:
-        lead = LeadService.create_or_update_lead(db, b_data)
+        lead = await LeadService.create_or_update_lead(db, b_data)
         enriched = await enricher.enrich_lead(
             business_name=lead.business_name,
             website=lead.website,

@@ -166,7 +166,7 @@ def list_suppression(db: Session = Depends(get_db)):
 
 
 @router.post("/suppression")
-def add_suppression(
+async def add_suppression(
     data: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
     _: bool = Depends(verify_api_key),
@@ -174,7 +174,7 @@ def add_suppression(
     recipient = data.get("recipient")
     if not recipient:
         raise HTTPException(status_code=400, detail="recipient is required")
-    s = OutreachService.add_to_suppression(
+    s = await OutreachService.add_to_suppression(
         recipient=recipient,
         channel=data.get("channel", "ALL"),
         reason=data.get("reason", "MANUAL"),
@@ -290,7 +290,7 @@ async def handle_whatsapp_webhook(payload: Dict[str, Any] = Body(...), db: Sessi
 
         # Check opt-out
         if ev.get("is_opt_out"):
-            OutreachService.add_to_suppression(
+            await OutreachService.add_to_suppression(
                 recipient=sender_phone,
                 channel="WHATSAPP",
                 reason="UNSUBSCRIBE",

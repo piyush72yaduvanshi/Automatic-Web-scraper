@@ -1,12 +1,12 @@
-"""Rate limiting using Redis backend."""
+"""Rate limiting using in-memory storage (Redis backend temporarily disabled)."""
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from app.core.config import settings
 
-# Create limiter with Redis storage for distributed rate limiting
+# Create limiter with in-memory storage for local development
+# Note: Redis backend temporarily disabled due to authentication issues
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=str(settings.REDIS_URL),
+    storage_uri="memory://",
     strategy="fixed-window",
 )

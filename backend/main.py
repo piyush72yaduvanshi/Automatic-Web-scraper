@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from prometheus_fastapi_instrumentator import Instrumentator
+# from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -114,8 +114,8 @@ async def add_request_id(request: Request, call_next):
     response.headers["X-Request-ID"] = request_id
     return response
 
-# Prometheus metrics
-Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+# Prometheus metrics (temporarily disabled due to dependency conflict)
+# Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
