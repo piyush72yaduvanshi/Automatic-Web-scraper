@@ -9,5 +9,6 @@ export const useStats = () => {
       const { data } = await api.get<Stats>('/stats');
       return data;
     },
+    staleTime: 30 * 1000, // 30 seconds - more frequent updates for dashboard stats
   });
 };
