@@ -97,6 +97,12 @@ from app.models.social import (
     SocialPostMetric,
 )
 
+# Social Media & Inbound Lead Capture Models
+from app.models.social_media_lead import (
+    SocialMediaLead,
+    InboundMessage,
+)
+
 __all__ = [
     "GUID",
     "BusinessLead",
@@ -156,4 +162,6 @@ __all__ = [
     "ScheduleType",
     "TargetType",
     "DiscoveryRunStatus",
+    "SocialMediaLead",
+    "InboundMessage",
 ]

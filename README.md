@@ -10,6 +10,8 @@ An enterprise-grade, autonomous, fault-tolerant operating system pairing high-th
 - **Multi-Source Scraping**: Google Places API, Google Maps via SerpAPI & Apify, and Firecrawl deep-web crawlers.
 - **Entity Extraction**: Robust contact extractors for verified emails, normalized E.164 phone numbers, and social media handles.
 - **Deduplication & Provenance**: Evidence tracking with SHA-256 fingerprinting and source confidence scoring.
+- **🆕 Automated Discovery**: Scheduled discovery with city/state/country/industry targeting, configurable intervals (hourly/daily/weekly/cron), and event-driven workflow automation.
+- **🆕 Discovery Scheduler UI**: Visual schedule management with manual triggers, run history tracking, and real-time workflow monitoring.
 
 ### 2. Relational CRM & Pipeline
 - **Entity Graph**: Complete relational models for Companies, Contacts, Deals, Pipelines, Stages, Activities, Tasks, and Meetings.

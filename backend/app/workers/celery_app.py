@@ -9,7 +9,12 @@ celery_app = Celery(
     "crm_lead_discovery",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.workers.tasks", "app.workers.scheduled_discovery"]
+    include=[
+        "app.workers.tasks",
+        "app.workers.scheduled_discovery",
+        "app.workers.social_polling_tasks",
+        "app.workers.inbound_tasks"
+    ]
 )
 
 # Configure Celery
@@ -42,5 +47,41 @@ celery_app.conf.beat_schedule = {
     'sync-social-metrics': {
         'task': 'app.workers.tasks.sync_social_metrics_task',
         'schedule': 1800.0,  # Every 30 minutes
+    },
+    # Instagram polling - every 5 minutes
+    'poll-instagram-engagements': {
+        'task': 'app.workers.social_polling_tasks.poll_instagram_engagements',
+        'schedule': 300.0,  # 5 minutes
+        'options': {'expires': 240}
+    },
+    # Facebook polling - every 5 minutes
+    'poll-facebook-engagements': {
+        'task': 'app.workers.social_polling_tasks.poll_facebook_engagements',
+        'schedule': 300.0,
+        'options': {'expires': 240}
+    },
+    # Twitter polling - every 5 minutes
+    'poll-twitter-mentions': {
+        'task': 'app.workers.social_polling_tasks.poll_twitter_mentions',
+        'schedule': 300.0,
+        'options': {'expires': 240}
+    },
+    # LinkedIn polling - every 10 minutes (lower rate limits)
+    'poll-linkedin-engagements': {
+        'task': 'app.workers.social_polling_tasks.poll_linkedin_engagements',
+        'schedule': 600.0,  # 10 minutes
+        'options': {'expires': 540}
+    },
+    # Process unprocessed inbound messages - every 2 minutes
+    'process-inbound-messages': {
+        'task': 'app.workers.inbound_tasks.process_inbound_messages',
+        'schedule': 120.0,  # 2 minutes
+        'options': {'expires': 100}
+    },
+    # Process unprocessed social leads - every 3 minutes
+    'process-social-leads': {
+        'task': 'app.workers.inbound_tasks.process_social_media_leads',
+        'schedule': 180.0,
+        'options': {'expires': 150}
     },
 }
