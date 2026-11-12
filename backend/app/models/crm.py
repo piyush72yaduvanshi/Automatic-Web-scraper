@@ -220,7 +220,7 @@ class Meeting(Base):
 
 
 class CallLog(Base):
-    ""\"Phone call tracking log.""\"
+    """Phone call tracking log."""
 
     __tablename__ = "call_logs"
 
@@ -249,7 +249,7 @@ class CallLog(Base):
 
 
 class Note(Base):
-    ""\"Manual note on lead/company/contact/deal.""\"
+    """Manual note on lead/company/contact/deal."""
 
     __tablename__ = "notes"
 
@@ -274,7 +274,7 @@ class Note(Base):
 
 
 class Email(Base):
-    ""\"Email interaction tracking.""\"
+    """Email interaction tracking."""
 
     __tablename__ = "emails"
 
