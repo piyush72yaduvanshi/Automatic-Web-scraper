@@ -370,6 +370,7 @@ def list_call_logs(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
 ):
     """List call logs with filters."""
     from app.models.crm import CallLog
@@ -438,7 +439,11 @@ def create_call_log(
 
 
 @router.get("/call-logs/{call_log_id}")
-def get_call_log(call_log_id: str, db: Session = Depends(get_db)):
+def get_call_log(
+    call_log_id: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
     """Get a single call log by ID."""
     from app.models.crm import CallLog
     
@@ -508,6 +513,7 @@ def list_notes(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
 ):
     """List notes with filters."""
     from app.models.crm import Note
@@ -572,7 +578,11 @@ def create_note(
 
 
 @router.get("/notes/{note_id}")
-def get_note(note_id: str, db: Session = Depends(get_db)):
+def get_note(
+    note_id: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
     """Get a single note by ID."""
     from app.models.crm import Note
     
@@ -657,6 +667,7 @@ def list_emails(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
 ):
     """List emails with filters."""
     from app.models.crm import Email
@@ -723,7 +734,11 @@ def create_email(
 
 
 @router.get("/emails/{email_id}")
-def get_email(email_id: str, db: Session = Depends(get_db)):
+def get_email(
+    email_id: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
     """Get a single email by ID."""
     from app.models.crm import Email
     

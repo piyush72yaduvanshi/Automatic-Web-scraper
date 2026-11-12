@@ -40,7 +40,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ companyId, contactId, dealId,
       duration_seconds: durationSeconds,
       outcome,
       notes,
-      call_started_at: callStartedAt || new Date().toISOString(),
+      call_started_at: callStartedAt ? new Date(callStartedAt).toISOString() : new Date().toISOString(),
     });
   };
 

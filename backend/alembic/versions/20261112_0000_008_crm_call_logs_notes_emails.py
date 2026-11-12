@@ -65,6 +65,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['contact_id'], ['contacts.id'], ondelete='SET NULL'),
         sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['deal_id'], ['deals.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['lead_id'], ['business_leads.id'], ondelete='SET NULL'),
     )
     op.create_index('idx_notes_contact_id', 'notes', ['contact_id'])
     op.create_index('idx_notes_company_id', 'notes', ['company_id'])

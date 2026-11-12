@@ -47,11 +47,15 @@ def process_inbound_messages(self):
                 # Convert high-interest messages to leads
                 if message.interest_score >= 0.7 and not message.lead_id:
                     if message.channel == "EMAIL":
-                        await EmailLeadCaptureService._convert_to_business_lead(message, db)
+                        loop.run_until_complete(
+                            EmailLeadCaptureService._convert_to_business_lead(message, db)
+                        )
                     else:
                         # Handle WhatsApp/SMS conversion
                         from app.services.inbound.whatsapp_service import WhatsAppWebhookHandler
-                        await WhatsAppWebhookHandler._convert_to_business_lead(message, db)
+                        loop.run_until_complete(
+                            WhatsAppWebhookHandler._convert_to_business_lead(message, db)
+                        )
                     
                     processed_count += 1
                 
@@ -118,7 +122,9 @@ def process_social_media_leads(self):
                 # Convert to business lead if not already done
                 if not social_lead.lead_id:
                     extractor = BaseSocialExtractor(social_lead.platform)
-                    business_lead = await extractor.convert_to_business_lead(social_lead, db)
+                    business_lead = loop.run_until_complete(
+                        extractor.convert_to_business_lead(social_lead, db)
+                    )
                     
                     if business_lead:
                         converted_count += 1

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, func, desc
 
 from app.core.database import get_db
-from app.core.auth import verify_api_key
+from app.core.security import verify_api_key
 from app.models.social_media_lead import SocialMediaLead, InboundMessage
 from app.models.business_lead import BusinessLead
 from app.schemas.social_media_lead import (
