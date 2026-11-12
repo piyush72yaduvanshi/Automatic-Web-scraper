@@ -25,6 +25,9 @@ from app.models.crm import (
     Activity,
     CRMTask,
     Meeting,
+    CallLog,
+    Note,
+    Email,
 )
 
 # Outreach & Messaging Models
@@ -121,6 +124,9 @@ __all__ = [
     "Activity",
     "CRMTask",
     "Meeting",
+    "CallLog",
+    "Note",
+    "Email",
     "OutreachCampaign",
     "CampaignStep",
     "OutreachApproval",
