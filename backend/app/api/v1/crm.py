@@ -356,3 +356,428 @@ async def schedule_meeting(
     meeting = await CRMService.schedule_meeting_with_ai_prep(db, data)
     return {"id": str(meeting.id), "title": meeting.title, "status": "scheduled"}
 
+
+# -----------------------------------------------------------------
+# Call Logs
+# -----------------------------------------------------------------
+@router.get("/call-logs")
+def list_call_logs(
+    company_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    deal_id: Optional[str] = None,
+    direction: Optional[str] = None,
+    outcome: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List call logs with filters."""
+    from app.models.crm import CallLog
+    
+    query = db.query(CallLog)
+    
+    if company_id:
+        query = query.filter(CallLog.company_id == uuid.UUID(company_id))
+    if contact_id:
+        query = query.filter(CallLog.contact_id == uuid.UUID(contact_id))
+    if deal_id:
+        query = query.filter(CallLog.deal_id == uuid.UUID(deal_id))
+    if direction:
+        query = query.filter(CallLog.direction == direction)
+    if outcome:
+        query = query.filter(CallLog.outcome == outcome)
+    
+    call_logs = query.order_by(CallLog.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return [
+        {
+            "id": str(c.id),
+            "direction": c.direction,
+            "phone_number": c.phone_number,
+            "duration_seconds": c.duration_seconds,
+            "outcome": c.outcome,
+            "notes": c.notes,
+            "company_name": c.company.name if c.company else None,
+            "contact_name": f"{c.contact.first_name} {c.contact.last_name}".strip() if c.contact else None,
+            "call_started_at": c.call_started_at.isoformat() if c.call_started_at else None,
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in call_logs
+    ]
+
+
+@router.post("/call-logs")
+def create_call_log(
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Create a new call log."""
+    from app.models.crm import CallLog
+    from datetime import datetime
+    
+    call_log = CallLog(
+        id=uuid.uuid4(),
+        contact_id=uuid.UUID(str(data["contact_id"])) if data.get("contact_id") else None,
+        company_id=uuid.UUID(str(data["company_id"])) if data.get("company_id") else None,
+        deal_id=uuid.UUID(str(data["deal_id"])) if data.get("deal_id") else None,
+        direction=data["direction"],
+        duration_seconds=data.get("duration_seconds", 0),
+        phone_number=data.get("phone_number"),
+        outcome=data.get("outcome"),
+        notes=data.get("notes"),
+        call_started_at=datetime.fromisoformat(data["call_started_at"]) if data.get("call_started_at") else None,
+        created_by=data.get("created_by"),
+    )
+    
+    db.add(call_log)
+    db.commit()
+    db.refresh(call_log)
+    
+    return {"id": str(call_log.id), "status": "created"}
+
+
+@router.get("/call-logs/{call_log_id}")
+def get_call_log(call_log_id: str, db: Session = Depends(get_db)):
+    """Get a single call log by ID."""
+    from app.models.crm import CallLog
+    
+    call_log = db.query(CallLog).filter(CallLog.id == uuid.UUID(call_log_id)).first()
+    if not call_log:
+        raise HTTPException(status_code=404, detail="Call log not found")
+    
+    return {
+        "id": str(call_log.id),
+        "direction": call_log.direction,
+        "phone_number": call_log.phone_number,
+        "duration_seconds": call_log.duration_seconds,
+        "outcome": call_log.outcome,
+        "notes": call_log.notes,
+        "transcript": call_log.transcript,
+        "recording_url": call_log.recording_url,
+        "company_id": str(call_log.company_id) if call_log.company_id else None,
+        "company_name": call_log.company.name if call_log.company else None,
+        "contact_id": str(call_log.contact_id) if call_log.contact_id else None,
+        "contact_name": f"{call_log.contact.first_name} {call_log.contact.last_name}".strip() if call_log.contact else None,
+        "deal_id": str(call_log.deal_id) if call_log.deal_id else None,
+        "call_started_at": call_log.call_started_at.isoformat() if call_log.call_started_at else None,
+        "created_at": call_log.created_at.isoformat(),
+        "created_by": call_log.created_by,
+    }
+
+
+@router.patch("/call-logs/{call_log_id}")
+def update_call_log(
+    call_log_id: str,
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Update a call log."""
+    from app.models.crm import CallLog
+    
+    call_log = db.query(CallLog).filter(CallLog.id == uuid.UUID(call_log_id)).first()
+    if not call_log:
+        raise HTTPException(status_code=404, detail="Call log not found")
+    
+    if "outcome" in data:
+        call_log.outcome = data["outcome"]
+    if "notes" in data:
+        call_log.notes = data["notes"]
+    if "transcript" in data:
+        call_log.transcript = data["transcript"]
+    if "recording_url" in data:
+        call_log.recording_url = data["recording_url"]
+    
+    db.commit()
+    db.refresh(call_log)
+    
+    return {"id": str(call_log.id), "status": "updated"}
+
+
+# -----------------------------------------------------------------
+# Notes
+# -----------------------------------------------------------------
+@router.get("/notes")
+def list_notes(
+    company_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    deal_id: Optional[str] = None,
+    lead_id: Optional[str] = None,
+    is_pinned: Optional[bool] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List notes with filters."""
+    from app.models.crm import Note
+    
+    query = db.query(Note)
+    
+    if company_id:
+        query = query.filter(Note.company_id == uuid.UUID(company_id))
+    if contact_id:
+        query = query.filter(Note.contact_id == uuid.UUID(contact_id))
+    if deal_id:
+        query = query.filter(Note.deal_id == uuid.UUID(deal_id))
+    if lead_id:
+        query = query.filter(Note.lead_id == uuid.UUID(lead_id))
+    if is_pinned is not None:
+        query = query.filter(Note.is_pinned == is_pinned)
+    
+    # Pinned notes first, then by created_at descending
+    notes = query.order_by(Note.is_pinned.desc(), Note.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return [
+        {
+            "id": str(n.id),
+            "content": n.content,
+            "is_pinned": n.is_pinned,
+            "company_name": n.company.name if n.company else None,
+            "contact_name": f"{n.contact.first_name} {n.contact.last_name}".strip() if n.contact else None,
+            "deal_title": n.deal.title if n.deal else None,
+            "created_by": n.created_by,
+            "created_at": n.created_at.isoformat(),
+            "updated_at": n.updated_at.isoformat(),
+        }
+        for n in notes
+    ]
+
+
+@router.post("/notes")
+def create_note(
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Create a new note."""
+    from app.models.crm import Note
+    
+    note = Note(
+        id=uuid.uuid4(),
+        content=data["content"],
+        company_id=uuid.UUID(str(data["company_id"])) if data.get("company_id") else None,
+        contact_id=uuid.UUID(str(data["contact_id"])) if data.get("contact_id") else None,
+        deal_id=uuid.UUID(str(data["deal_id"])) if data.get("deal_id") else None,
+        lead_id=uuid.UUID(str(data["lead_id"])) if data.get("lead_id") else None,
+        is_pinned=data.get("is_pinned", False),
+        created_by=data.get("created_by"),
+    )
+    
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    
+    return {"id": str(note.id), "status": "created"}
+
+
+@router.get("/notes/{note_id}")
+def get_note(note_id: str, db: Session = Depends(get_db)):
+    """Get a single note by ID."""
+    from app.models.crm import Note
+    
+    note = db.query(Note).filter(Note.id == uuid.UUID(note_id)).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    return {
+        "id": str(note.id),
+        "content": note.content,
+        "is_pinned": note.is_pinned,
+        "company_id": str(note.company_id) if note.company_id else None,
+        "company_name": note.company.name if note.company else None,
+        "contact_id": str(note.contact_id) if note.contact_id else None,
+        "contact_name": f"{note.contact.first_name} {note.contact.last_name}".strip() if note.contact else None,
+        "deal_id": str(note.deal_id) if note.deal_id else None,
+        "deal_title": note.deal.title if note.deal else None,
+        "lead_id": str(note.lead_id) if note.lead_id else None,
+        "created_by": note.created_by,
+        "created_at": note.created_at.isoformat(),
+        "updated_at": note.updated_at.isoformat(),
+    }
+
+
+@router.patch("/notes/{note_id}")
+def update_note(
+    note_id: str,
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Update a note."""
+    from app.models.crm import Note
+    from datetime import datetime
+    
+    note = db.query(Note).filter(Note.id == uuid.UUID(note_id)).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    if "content" in data:
+        note.content = data["content"]
+    if "is_pinned" in data:
+        note.is_pinned = data["is_pinned"]
+    
+    note.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(note)
+    
+    return {"id": str(note.id), "status": "updated"}
+
+
+@router.delete("/notes/{note_id}")
+def delete_note(
+    note_id: str,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Delete a note."""
+    from app.models.crm import Note
+    
+    note = db.query(Note).filter(Note.id == uuid.UUID(note_id)).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    db.delete(note)
+    db.commit()
+    
+    return {"id": str(note_id), "status": "deleted"}
+
+
+# -----------------------------------------------------------------
+# Emails
+# -----------------------------------------------------------------
+@router.get("/emails")
+def list_emails(
+    company_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    deal_id: Optional[str] = None,
+    direction: Optional[str] = None,
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List emails with filters."""
+    from app.models.crm import Email
+    
+    query = db.query(Email)
+    
+    if company_id:
+        query = query.filter(Email.company_id == uuid.UUID(company_id))
+    if contact_id:
+        query = query.filter(Email.contact_id == uuid.UUID(contact_id))
+    if deal_id:
+        query = query.filter(Email.deal_id == uuid.UUID(deal_id))
+    if direction:
+        query = query.filter(Email.direction == direction)
+    if status:
+        query = query.filter(Email.status == status)
+    
+    emails = query.order_by(Email.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return [
+        {
+            "id": str(e.id),
+            "subject": e.subject,
+            "direction": e.direction,
+            "status": e.status,
+            "company_name": e.company.name if e.company else None,
+            "contact_name": f"{e.contact.first_name} {e.contact.last_name}".strip() if e.contact else None,
+            "sent_at": e.sent_at.isoformat() if e.sent_at else None,
+            "opened_at": e.opened_at.isoformat() if e.opened_at else None,
+            "clicked_at": e.clicked_at.isoformat() if e.clicked_at else None,
+            "replied_at": e.replied_at.isoformat() if e.replied_at else None,
+            "created_at": e.created_at.isoformat(),
+        }
+        for e in emails
+    ]
+
+
+@router.post("/emails")
+def create_email(
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Create a new email record."""
+    from app.models.crm import Email
+    
+    email = Email(
+        id=uuid.uuid4(),
+        contact_id=uuid.UUID(str(data["contact_id"])) if data.get("contact_id") else None,
+        company_id=uuid.UUID(str(data["company_id"])) if data.get("company_id") else None,
+        deal_id=uuid.UUID(str(data["deal_id"])) if data.get("deal_id") else None,
+        subject=data.get("subject"),
+        body_text=data.get("body_text"),
+        body_html=data.get("body_html"),
+        direction=data["direction"],
+        status=data.get("status", "draft"),
+    )
+    
+    db.add(email)
+    db.commit()
+    db.refresh(email)
+    
+    return {"id": str(email.id), "status": "created"}
+
+
+@router.get("/emails/{email_id}")
+def get_email(email_id: str, db: Session = Depends(get_db)):
+    """Get a single email by ID."""
+    from app.models.crm import Email
+    
+    email = db.query(Email).filter(Email.id == uuid.UUID(email_id)).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    
+    return {
+        "id": str(email.id),
+        "subject": email.subject,
+        "body_text": email.body_text,
+        "body_html": email.body_html,
+        "direction": email.direction,
+        "status": email.status,
+        "company_id": str(email.company_id) if email.company_id else None,
+        "company_name": email.company.name if email.company else None,
+        "contact_id": str(email.contact_id) if email.contact_id else None,
+        "contact_name": f"{email.contact.first_name} {email.contact.last_name}".strip() if email.contact else None,
+        "deal_id": str(email.deal_id) if email.deal_id else None,
+        "sent_at": email.sent_at.isoformat() if email.sent_at else None,
+        "opened_at": email.opened_at.isoformat() if email.opened_at else None,
+        "clicked_at": email.clicked_at.isoformat() if email.clicked_at else None,
+        "replied_at": email.replied_at.isoformat() if email.replied_at else None,
+        "created_at": email.created_at.isoformat(),
+    }
+
+
+@router.patch("/emails/{email_id}")
+def update_email_tracking(
+    email_id: str,
+    data: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key),
+):
+    """Update email tracking information."""
+    from app.models.crm import Email
+    from datetime import datetime
+    
+    email = db.query(Email).filter(Email.id == uuid.UUID(email_id)).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    
+    if "status" in data:
+        email.status = data["status"]
+    if "opened_at" in data:
+        email.opened_at = datetime.fromisoformat(data["opened_at"]) if data["opened_at"] else None
+    if "clicked_at" in data:
+        email.clicked_at = datetime.fromisoformat(data["clicked_at"]) if data["clicked_at"] else None
+    if "replied_at" in data:
+        email.replied_at = datetime.fromisoformat(data["replied_at"]) if data["replied_at"] else None
+    if "sent_at" in data:
+        email.sent_at = datetime.fromisoformat(data["sent_at"]) if data["sent_at"] else None
+    
+    db.commit()
+    db.refresh(email)
+    
+    return {"id": str(email.id), "status": "updated"}
