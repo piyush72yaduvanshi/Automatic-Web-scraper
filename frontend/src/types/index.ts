@@ -626,3 +626,61 @@ export interface SocialResearchResult {
   visual_theme: string;
 }
 
+
+// -------------------------------------------------------------
+// CRM Extended Interfaces: Call Logs, Notes, Emails
+// -------------------------------------------------------------
+export interface CallLogItem {
+  id: string;
+  contact_id?: string;
+  company_id?: string;
+  deal_id?: string;
+  direction: 'INBOUND' | 'OUTBOUND';
+  duration_seconds: number;
+  phone_number?: string;
+  recording_url?: string;
+  transcript?: string;
+  outcome?: string; // CONNECTED, NO_ANSWER, VOICEMAIL, BUSY
+  notes?: string;
+  call_started_at?: string;
+  created_at: string;
+  created_by?: string;
+  company_name?: string;
+  contact_name?: string;
+}
+
+export interface NoteItem {
+  id: string;
+  content: string;
+  company_id?: string;
+  contact_id?: string;
+  deal_id?: string;
+  lead_id?: string;
+  is_pinned: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  company_name?: string;
+  contact_name?: string;
+  deal_title?: string;
+}
+
+export interface EmailItem {
+  id: string;
+  contact_id?: string;
+  company_id?: string;
+  deal_id?: string;
+  subject?: string;
+  body_text?: string;
+  body_html?: string;
+  direction: 'INBOUND' | 'OUTBOUND';
+  status: string; // draft, sent, delivered, opened, clicked, replied, bounced
+  opened_at?: string;
+  clicked_at?: string;
+  replied_at?: string;
+  sent_at?: string;
+  created_at: string;
+  company_name?: string;
+  contact_name?: string;
+}
+
