@@ -35,19 +35,63 @@ const EmailTimeline: React.FC<EmailTimelineProps> = ({ companyId, contactId, dea
 
   const getStatusInfo = (status: string) => {
     const statusMap = {
-      draft: { icon: Mail, color: 'slate', label: 'Draft' },
-      sent: { icon: Send, color: 'blue', label: 'Sent' },
-      delivered: { icon: Mail, color: 'green', label: 'Delivered' },
-      opened: { icon: MailOpen, color: 'indigo', label: 'Opened' },
-      clicked: { icon: MousePointerClick, color: 'purple', label: 'Clicked' },
-      replied: { icon: Reply, color: 'teal', label: 'Replied' },
-      bounced: { icon: XCircle, color: 'red', label: 'Bounced' },
+      draft: { 
+        icon: Mail, 
+        label: 'Draft',
+        containerClass: 'bg-slate-500/10 border-slate-500/20',
+        iconClass: 'text-slate-400',
+        badgeClass: 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+      },
+      sent: { 
+        icon: Send, 
+        label: 'Sent',
+        containerClass: 'bg-blue-500/10 border-blue-500/20',
+        iconClass: 'text-blue-400',
+        badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+      },
+      delivered: { 
+        icon: Mail, 
+        label: 'Delivered',
+        containerClass: 'bg-green-500/10 border-green-500/20',
+        iconClass: 'text-green-400',
+        badgeClass: 'bg-green-500/20 text-green-400 border-green-500/30'
+      },
+      opened: { 
+        icon: MailOpen, 
+        label: 'Opened',
+        containerClass: 'bg-indigo-500/10 border-indigo-500/20',
+        iconClass: 'text-indigo-400',
+        badgeClass: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+      },
+      clicked: { 
+        icon: MousePointerClick, 
+        label: 'Clicked',
+        containerClass: 'bg-purple-500/10 border-purple-500/20',
+        iconClass: 'text-purple-400',
+        badgeClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+      },
+      replied: { 
+        icon: Reply, 
+        label: 'Replied',
+        containerClass: 'bg-teal-500/10 border-teal-500/20',
+        iconClass: 'text-teal-400',
+        badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30'
+      },
+      bounced: { 
+        icon: XCircle, 
+        label: 'Bounced',
+        containerClass: 'bg-red-500/10 border-red-500/20',
+        iconClass: 'text-red-400',
+        badgeClass: 'bg-red-500/20 text-red-400 border-red-500/30'
+      },
     };
     return (
       statusMap[status as keyof typeof statusMap] || {
         icon: Mail,
-        color: 'slate',
         label: status,
+        containerClass: 'bg-slate-500/10 border-slate-500/20',
+        iconClass: 'text-slate-400',
+        badgeClass: 'bg-slate-500/20 text-slate-400 border-slate-500/30'
       }
     );
   };
@@ -87,9 +131,9 @@ const EmailTimeline: React.FC<EmailTimelineProps> = ({ companyId, contactId, dea
                 <div className="flex items-start gap-3">
                   {/* Status Icon */}
                   <div
-                    className={`p-2 rounded-lg bg-${statusInfo.color}-500/10 border border-${statusInfo.color}-500/20`}
+                    className={`p-2 rounded-lg border ${statusInfo.containerClass}`}
                   >
-                    <StatusIcon className={`w-4 h-4 text-${statusInfo.color}-400`} />
+                    <StatusIcon className={`w-4 h-4 ${statusInfo.iconClass}`} />
                   </div>
 
                   {/* Email Details */}
@@ -105,7 +149,7 @@ const EmailTimeline: React.FC<EmailTimelineProps> = ({ companyId, contactId, dea
                         </div>
                       </div>
                       <span
-                        className={`px-2 py-0.5 text-xs font-semibold rounded-full bg-${statusInfo.color}-500/20 text-${statusInfo.color}-400 border border-${statusInfo.color}-500/30 whitespace-nowrap`}
+                        className={`px-2 py-0.5 text-xs font-semibold rounded-full border whitespace-nowrap ${statusInfo.badgeClass}`}
                       >
                         {statusInfo.label}
                       </span>
