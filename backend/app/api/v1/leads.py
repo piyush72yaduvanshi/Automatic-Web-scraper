@@ -15,6 +15,7 @@ from app.schemas.lead import (
     LeadListResponse,
 )
 from app.services import LeadService
+from app.services.lead_automation_orchestrator import LeadAutomationOrchestrator
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -417,5 +418,47 @@ async def import_leads_csv(
 
     db.commit()
     return {"message": f"Successfully imported {imported} leads from CSV", "count": imported}
+
+
+@router.post("/bulk-process")
+async def bulk_process_leads(
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Process multiple leads through complete automation pipeline.
+    
+    Filters:
+    - status: "enriched", "discovered", etc.
+    - qualification_status: "New", "Qualified", "Maybe"
+    - min_score: int (default: 0)
+    - batch_size: int (default: 50, max: 500)
+    
+    Actions performed:
+    1. Email enrichment (if missing)
+    2. Lead qualification (if not qualified)
+    3. Auto-enroll in outreach (if score >= threshold)
+    4. Auto-convert to CRM (if score >= threshold)
+    """
+    filters = {
+        "status": payload.get("status"),
+        "qualification_status": payload.get("qualification_status"),
+        "min_score": payload.get("min_score", 0),
+        "has_email": payload.get("has_email")
+    }
+    
+    batch_size = min(payload.get("batch_size", 50), 500)
+    
+    result = await LeadAutomationOrchestrator.bulk_process_leads(
+        filters=filters,
+        batch_size=batch_size,
+        db=db
+    )
+    
+    return {
+        "success": True,
+        "summary": result,
+        "message": f"Processed {result['processed']} leads: {result['enrolled']} enrolled, {result['converted']} converted to CRM"
+    }
 
 

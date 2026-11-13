@@ -106,6 +106,12 @@ from app.models.social_media_lead import (
     InboundMessage,
 )
 
+# Automation Models
+from app.models.automation import (
+    AutomationSettings,
+    LeadException,
+)
+
 __all__ = [
     "GUID",
     "BusinessLead",
@@ -170,4 +176,6 @@ __all__ = [
     "DiscoveryRunStatus",
     "SocialMediaLead",
     "InboundMessage",
+    "AutomationSettings",
+    "LeadException",
 ]

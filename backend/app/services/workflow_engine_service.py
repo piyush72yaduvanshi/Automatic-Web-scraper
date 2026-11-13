@@ -341,6 +341,31 @@ class WorkflowEngineService:
                     db.commit()
             return {"status": "SUCCESS", "suppressed_recipient": recipient}
 
+        elif action_type == "ENRICH_EMAIL":
+            lead_id = input_payload.get("lead_id") or config.get("lead_id")
+            if not lead_id:
+                return {"status": "SKIPPED", "reason": "No lead_id provided"}
+            from app.services.email_enrichment_service import EmailEnrichmentService
+            result = await EmailEnrichmentService.enrich_lead_email(str(lead_id), db)
+            return {"status": "SUCCESS" if result.get("success") else "FAILED", "result": result}
+
+        elif action_type == "AUTO_ENROLL_OUTREACH":
+            lead_id = input_payload.get("lead_id") or config.get("lead_id")
+            sequence = config.get("sequence", "B2B_PROSPECTING")
+            if not lead_id:
+                return {"status": "SKIPPED", "reason": "No lead_id provided"}
+            from app.services.outreach_automation_service import OutreachAutomationService
+            result = OutreachAutomationService.auto_enroll_in_sequence(str(lead_id), sequence_name=sequence, db=db)
+            return {"status": "SUCCESS" if result.get("success") else "SKIPPED", "result": result}
+
+        elif action_type == "AUTO_CONVERT_CRM":
+            lead_id = input_payload.get("lead_id") or config.get("lead_id")
+            if not lead_id:
+                return {"status": "SKIPPED", "reason": "No lead_id provided"}
+            from app.services.crm_automation_service import CRMAutomationService
+            result = CRMAutomationService.auto_convert_lead_to_crm(str(lead_id), db)
+            return {"status": "SUCCESS" if result.get("success") else "SKIPPED", "result": result}
+
         elif action_type == "CONDITIONAL_BRANCH":
             # Evaluates simple boolean rules on previous results or payload
             field = config.get("field", "")
@@ -449,8 +474,8 @@ class WorkflowEngineService:
 
         default_workflows = [
             {
-                "name": "Auto-Qualify Newly Discovered Leads",
-                "description": "Triggered when a new lead is ingested. Researches digital footprint and calculates 5-factor ICP score.",
+                "name": "Auto-Qualify and Auto-Enroll Leads",
+                "description": "Triggered when a new lead is ingested. Researches, qualifies, enriches email, enrolls in outreach, and converts to CRM - fully automated.",
                 "trigger_type": "NEW_LEAD",
                 "steps": [
                     {
@@ -463,6 +488,24 @@ class WorkflowEngineService:
                         "step_id": "qualify",
                         "name": "Calculate ICP Score",
                         "action_type": "QUALIFY_LEAD",
+                        "config": {},
+                    },
+                    {
+                        "step_id": "enrich_email",
+                        "name": "Enrich Email if Missing",
+                        "action_type": "ENRICH_EMAIL",
+                        "config": {},
+                    },
+                    {
+                        "step_id": "auto_enroll",
+                        "name": "Auto-Enroll in Outreach",
+                        "action_type": "AUTO_ENROLL_OUTREACH",
+                        "config": {"sequence": "B2B_PROSPECTING"},
+                    },
+                    {
+                        "step_id": "auto_convert_crm",
+                        "name": "Auto-Convert to CRM",
+                        "action_type": "AUTO_CONVERT_CRM",
                         "config": {},
                     },
                 ],

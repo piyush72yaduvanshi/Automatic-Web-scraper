@@ -28,6 +28,7 @@ from app.api.v1 import (
     social,
     storage,
     social_leads,
+    automation,
 )
 
 api_router = APIRouter()
@@ -58,4 +59,5 @@ api_router.include_router(exceptions.router)
 api_router.include_router(social.router)
 api_router.include_router(storage.router)
 api_router.include_router(social_leads.router, prefix="/social-leads", tags=["social-leads"])
+api_router.include_router(automation.router)
 
