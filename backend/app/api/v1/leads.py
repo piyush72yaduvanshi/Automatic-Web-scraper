@@ -1,5 +1,6 @@
 """Leads API endpoints."""
 
+import logging
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Body
@@ -16,6 +17,8 @@ from app.schemas.lead import (
 )
 from app.services import LeadService
 from app.services.lead_automation_orchestrator import LeadAutomationOrchestrator
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -440,25 +443,29 @@ async def bulk_process_leads(
     3. Auto-enroll in outreach (if score >= threshold)
     4. Auto-convert to CRM (if score >= threshold)
     """
-    filters = {
-        "status": payload.get("status"),
-        "qualification_status": payload.get("qualification_status"),
-        "min_score": payload.get("min_score", 0),
-        "has_email": payload.get("has_email")
-    }
-    
-    batch_size = min(payload.get("batch_size", 50), 500)
-    
-    result = await LeadAutomationOrchestrator.bulk_process_leads(
-        filters=filters,
-        batch_size=batch_size,
-        db=db
-    )
-    
-    return {
-        "success": True,
-        "summary": result,
-        "message": f"Processed {result['processed']} leads: {result['enrolled']} enrolled, {result['converted']} converted to CRM"
-    }
+    try:
+        filters = {
+            "status": payload.get("status"),
+            "qualification_status": payload.get("qualification_status"),
+            "min_score": payload.get("min_score", 0),
+            "has_email": payload.get("has_email")
+        }
+        
+        batch_size = min(payload.get("batch_size", 50), 500)
+        
+        result = await LeadAutomationOrchestrator.bulk_process_leads(
+            filters=filters,
+            batch_size=batch_size,
+            db=db
+        )
+        
+        return {
+            "success": True,
+            "summary": result,
+            "message": f"Processed {result['processed']} leads: {result['enrolled']} enrolled, {result['converted']} converted to CRM"
+        }
+    except Exception as e:
+        logger.error(f"Bulk processing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, Index, Float
+from sqlalchemy import Column, String, Text, DateTime, Index, Float, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -44,7 +44,14 @@ class BusinessLead(Base):
     company_research = Column(Text, nullable=True)  # JSON
     data_confidence_score = Column(Float, default=50.0)
     company_id = Column(UUID(as_uuid=True), nullable=True)
-
+    
+    # Automation tracking
+    outreach_enrolled = Column(Boolean, default=False, server_default='false', index=True)
+    outreach_enrollment_date = Column(DateTime, nullable=True)
+    crm_converted = Column(Boolean, default=False, server_default='false', index=True)
+    crm_conversion_date = Column(DateTime, nullable=True)
+    email_enrichment_status = Column(String(50), default='pending', server_default='pending')
+    last_automation_run = Column(DateTime, nullable=True)
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

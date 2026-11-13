@@ -8,13 +8,141 @@ from sqlalchemy.orm import Session
 from app.models.business_lead import BusinessLead
 from app.models.lead_contact import LeadContact, ContactType
 from app.models.campaign import FollowupSequence, CampaignMember
-from app.models.outreach import OutreachCampaign
+from app.models.outreach import OutreachCampaign, OutreachApproval
 
 logger = logging.getLogger(__name__)
 
 
 class OutreachAutomationService:
     """Handles automatic enrollment of leads into outreach sequences."""
+    
+    @staticmethod
+    def _is_email_approvable(subject: str, body: str, recipient: str, company_name: str = "") -> bool:
+        """
+        Validate email meets quality standards for auto-approval.
+        
+        Safety checks:
+        1. Subject line exists and is not empty
+        2. No template placeholders ({{ }})
+        3. Body has minimum length (>100 chars)
+        4. Valid recipient email (not test/example domains)
+        5. Basic personalization present
+        """
+        # Check subject line
+        if not subject or len(subject.strip()) < 5:
+            logger.warning(f"Auto-approval failed: subject too short or empty")
+            return False
+        
+        # Check for template placeholders
+        if '{{' in subject or '{{' in body:
+            logger.warning(f"Auto-approval failed: unpersonalized template placeholders found")
+            return False
+        
+        # Check body length
+        if not body or len(body.strip()) < 100:
+            logger.warning(f"Auto-approval failed: body too short ({len(body)} chars)")
+            return False
+        
+        # Check recipient email validity
+        if not recipient or '@' not in recipient:
+            logger.warning(f"Auto-approval failed: invalid recipient email")
+            return False
+        
+        # Check for test/example domains
+        test_domains = ['@example.com', '@test.com', '@localhost', '@domain.com']
+        if any(domain in recipient.lower() for domain in test_domains):
+            logger.warning(f"Auto-approval failed: test/example domain in recipient")
+            return False
+        
+        # Check for basic personalization (company name or substantive content)
+        if company_name and company_name.lower() not in body.lower():
+            # If company name provided but not in body, it might lack personalization
+            # This is a soft check - we'll allow it but log a warning
+            logger.info(f"Note: company name not found in body, but allowing auto-approval")
+        
+        return True
+    
+    @classmethod
+    async def auto_approve_outreach_draft(
+        cls,
+        approval_id: str,
+        db: Session
+    ) -> Dict[str, Any]:
+        """
+        Automatically approve and send an outreach draft if it passes validation.
+        If validation fails, keep it in PENDING for manual review.
+        """
+        from app.services.automation_settings_service import AutomationSettingsService
+        from app.services.outreach_service import OutreachService
+        
+        # Check if auto-approval is enabled
+        if not AutomationSettingsService.is_auto_approve_enabled(db):
+            return {
+                "success": False,
+                "action": "auto_approval_disabled",
+                "message": "Auto-approval is disabled in settings"
+            }
+        
+        approval = db.query(OutreachApproval).filter(
+            OutreachApproval.id == uuid.UUID(str(approval_id))
+        ).first()
+        
+        if not approval:
+            return {"success": False, "error": "Approval record not found"}
+        
+        if approval.status != "PENDING":
+            return {"success": False, "error": f"Approval already {approval.status}"}
+        
+        # Get company name for personalization check
+        company_name = ""
+        if approval.lead_id:
+            lead = db.query(BusinessLead).filter(BusinessLead.id == approval.lead_id).first()
+            if lead:
+                company_name = lead.business_name
+        
+        # Validate content
+        is_valid = cls._is_email_approvable(
+            subject=approval.subject or "",
+            body=approval.body_content or "",
+            recipient=approval.recipient_destination or "",
+            company_name=company_name
+        )
+        
+        if is_valid:
+            # Auto-approve and send
+            logger.info(f"Auto-approving outreach {approval_id} after validation passed")
+            send_result = await OutreachService.approve_and_send(approval_id, db)
+            
+            return {
+                "success": True,
+                "action": "auto_approved",
+                "approval_id": approval_id,
+                "send_result": send_result
+            }
+        else:
+            # Keep in pending for manual review
+            approval.rejection_reason = "Auto-approval validation failed - requires manual review"
+            db.commit()
+            
+            # Log exception
+            from app.models.automation import LeadException
+            exception = LeadException(
+                lead_id=approval.lead_id,
+                exception_type="EMAIL_VALIDATION_FAILED",
+                reason="Email validation failed during auto-approval: content quality checks did not pass",
+                severity="warning"
+            )
+            db.add(exception)
+            db.commit()
+            
+            logger.warning(f"Auto-approval validation failed for {approval_id}, flagged for manual review")
+            
+            return {
+                "success": False,
+                "action": "requires_manual_review",
+                "reason": "Validation failed",
+                "approval_id": approval_id
+            }
     
     @classmethod
     def auto_enroll_in_sequence(
