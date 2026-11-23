@@ -20,6 +20,7 @@ import {
   Facebook,
   Twitter,
   Linkedin,
+  MapPin,
 } from 'lucide-react';
 
 const IntegrationsView: React.FC = () => {
@@ -101,6 +102,7 @@ const IntegrationsView: React.FC = () => {
   };
 
   const getCategoryIcon = (category: string, name?: string) => {
+    if (name === 'local_maps_scraper') return <MapPin className="w-4 h-4 text-emerald-400" />;
     if (name === 'instagram') return <Instagram className="w-4 h-4 text-pink-400" />;
     if (name === 'facebook') return <Facebook className="w-4 h-4 text-blue-500" />;
     if (name === 'twitter') return <Twitter className="w-4 h-4 text-sky-400" />;

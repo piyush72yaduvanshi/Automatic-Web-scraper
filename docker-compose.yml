@@ -84,6 +84,26 @@ services:
           memory: 256M
     restart: unless-stopped
 
+  # Local Autonomous Google Maps Scraper Kit (Zero-Cost / Unlimited Headless Chrome CDP)
+  google-maps-scraper:
+    build:
+      context: ./google-map-scraper
+      dockerfile: Dockerfile
+    container_name: crm_leads_maps_scraper
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - maps_scraper_data:/kit/.engine/data
+    networks:
+      - crm-lead-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
   # Database Migration Service
   migrate:
     build:
@@ -168,6 +188,10 @@ services:
       AUTH_ENABLED: ${AUTH_ENABLED:-false}
 
       # Provider API Keys (set in .env file)
+      LOCAL_MAPS_SCRAPER_URL: ${LOCAL_MAPS_SCRAPER_URL:-http://google-maps-scraper:8080}
+      LOCAL_MAPS_SCRAPER_TIMEOUT: 300
+      LOCAL_MAPS_SCRAPER_API_KEY: ${LOCAL_MAPS_SCRAPER_API_KEY:-}
+      DEFAULT_DISCOVERY_PROVIDER: ${DEFAULT_DISCOVERY_PROVIDER:-local_maps}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
       APIFY_MAPS_ACTOR_ID: ${APIFY_MAPS_ACTOR_ID:-nwua9Gu5YrADL7ZDj}
       APIFY_REQUEST_TIMEOUT: 300
@@ -272,6 +296,8 @@ services:
       VECTOR_DIMENSION: 768
       
       # Provider API Keys
+      LOCAL_MAPS_SCRAPER_URL: ${LOCAL_MAPS_SCRAPER_URL:-http://google-maps-scraper:8080}
+      LOCAL_MAPS_SCRAPER_TIMEOUT: 300
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
       APIFY_MAPS_ACTOR_ID: ${APIFY_MAPS_ACTOR_ID:-nwua9Gu5YrADL7ZDj}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
@@ -343,3 +369,5 @@ volumes:
     name: crm_leads_redis_data
   minio_data:
     name: crm_leads_minio_data
+  maps_scraper_data:
+    name: crm_leads_maps_scraper_data

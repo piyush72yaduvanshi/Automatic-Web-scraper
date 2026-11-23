@@ -102,6 +102,7 @@ class ProviderHealthService:
         cls._init_provider("gemini", "Google Gemini API", IntegrationCategory.AI, "Primary LLM for company research, lead scoring, and outreach drafting.")
         cls._init_provider("openrouter", "OpenRouter AI", IntegrationCategory.AI, "Secondary / Fallback multi-model LLM router.")
         cls._init_provider("heuristic_nlp", "Heuristic NLP Engine", IntegrationCategory.AI, "Built-in offline regex & rule-based analyzer (zero external dependencies).")
+        cls._init_provider("local_maps_scraper", "Google Maps Scraper Engine", IntegrationCategory.DISCOVERY, "Autonomous local headless Chrome engine for zero-cost, unlimited business discovery with direct email and social extraction.")
         cls._init_provider("google_places", "Google Places / Maps Platform", IntegrationCategory.DISCOVERY, "Official Google Maps & Places API for local business discovery, coordinates, and geocoding.")
         cls._init_provider("serpapi", "SerpAPI Search Engine", IntegrationCategory.DISCOVERY, "Google Maps & Google Search automated scraping API.")
         cls._init_provider("apify", "Apify Actor Platform", IntegrationCategory.DISCOVERY, "Cloud web scrapers and Google Maps business crawlers.")
@@ -146,7 +147,26 @@ class ProviderHealthService:
                 cls._runtime_state["openrouter"]["status"] = IntegrationStatus.HEALTHY.value
                 cls._runtime_state["openrouter"]["user_message"] = f"OpenRouter configured using model {settings.OPENROUTER_MODEL}."
 
-        # 4. Google Places / Maps Platform status
+        # 4. Local Google Maps Scraper Kit status
+        try:
+            with httpx.Client(timeout=1.0) as client:
+                l_url = settings.LOCAL_MAPS_SCRAPER_URL.rstrip('/')
+                res = client.get(f"{l_url}/api/v1/jobs")
+                engine_tag = res.headers.get("X-Engine", "")
+                if engine_tag.startswith("gmskit-engine/") or res.status_code in (200, 401):
+                    cls._runtime_state["local_maps_scraper"]["is_configured"] = True
+                    cls._runtime_state["local_maps_scraper"]["status"] = IntegrationStatus.HEALTHY.value
+                    cls._runtime_state["local_maps_scraper"]["user_message"] = f"Local Scraper active on {l_url} ({engine_tag or 'ready'})."
+                else:
+                    cls._runtime_state["local_maps_scraper"]["is_configured"] = False
+                    cls._runtime_state["local_maps_scraper"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+                    cls._runtime_state["local_maps_scraper"]["user_message"] = f"Port responding on {l_url} but did not identify as Google Maps Scraper Kit."
+        except Exception:
+            cls._runtime_state["local_maps_scraper"]["is_configured"] = False
+            cls._runtime_state["local_maps_scraper"]["status"] = IntegrationStatus.NOT_CONFIGURED.value
+            cls._runtime_state["local_maps_scraper"]["user_message"] = f"Scraper engine offline on {settings.LOCAL_MAPS_SCRAPER_URL}. Run 'python google-map-scraper/engine/serve.py' or 'docker compose up'."
+
+        # 5. Google Places / Maps Platform status
         gplaces_key = settings.GOOGLE_PLACES_API_KEY or settings.GOOGLE_MAPS_API_KEY
         if not gplaces_key:
             cls._runtime_state["google_places"]["is_configured"] = False
@@ -370,6 +390,18 @@ class ProviderHealthService:
                     else:
                         cls.record_failure("openrouter", f"HTTP {resp.status_code}: {resp.text}", IntegrationStatus.INVALID_CREDENTIALS)
                         return {"success": False, "status": IntegrationStatus.INVALID_CREDENTIALS.value, "message": f"OpenRouter returned HTTP {resp.status_code}."}
+
+            elif provider_name == "local_maps_scraper":
+                l_url = settings.LOCAL_MAPS_SCRAPER_URL.rstrip('/')
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.get(f"{l_url}/api/v1/jobs")
+                    engine_tag = resp.headers.get("X-Engine", "")
+                    if engine_tag.startswith("gmskit-engine/") or resp.status_code in (200, 401):
+                        cls.record_success("local_maps_scraper")
+                        return {"success": True, "status": IntegrationStatus.HEALTHY.value, "message": f"Local Google Maps Scraper Engine verified on {l_url} ({engine_tag})."}
+                    else:
+                        cls.record_failure("local_maps_scraper", f"Unexpected response: HTTP {resp.status_code}")
+                        return {"success": False, "status": IntegrationStatus.DEGRADED.value, "message": f"Engine at {l_url} did not identify as Google Maps Scraper Kit."}
 
             elif provider_name == "google_places":
                 key = settings.GOOGLE_PLACES_API_KEY or settings.GOOGLE_MAPS_API_KEY

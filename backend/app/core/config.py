@@ -57,8 +57,12 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_database_url(cls, v):
         if not v:
-            return "postgresql+psycopg://postgres:postgres@localhost:5432/crm_leads"
-        return str(v)
+            return "postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
+        s = str(v)
+        if "postgres:postgres@localhost:5432" in s:
+            dev_pwd = os.getenv("POSTGRES_PASSWORD", "postgres_dev_password_change_in_prod")
+            return s.replace("postgres:postgres@localhost:5432", f"postgres:{dev_pwd}@localhost:5432")
+        return s
 
     # Redis
     REDIS_URL: Union[RedisDsn, str] = Field(
@@ -117,6 +121,12 @@ class Settings(BaseSettings):
     GOOGLE_PLACES_API_KEY: Optional[str] = None
     GOOGLE_MAPS_API_KEY: Optional[str] = None
     GOOGLE_PLACES_REQUEST_TIMEOUT: int = 30
+
+    # Local Autonomous Google Maps Scraper Kit (Zero-Cost / Unlimited)
+    LOCAL_MAPS_SCRAPER_URL: str = "http://localhost:8080"
+    LOCAL_MAPS_SCRAPER_TIMEOUT: int = 300
+    LOCAL_MAPS_SCRAPER_API_KEY: Optional[str] = None
+    DEFAULT_DISCOVERY_PROVIDER: str = "local_maps"
 
     FIRECRAWL_API_KEY: Optional[str] = None
     FIRECRAWL_REQUEST_TIMEOUT: int = 60

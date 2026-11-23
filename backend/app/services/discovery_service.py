@@ -146,6 +146,14 @@ class DiscoveryService:
             for b_data in businesses:
                 lead = await LeadService.create_or_update_lead(db, b_data)
                 
+                # If discovery provider already extracted direct emails/socials (e.g. LocalMapsScraper)
+                if b_data.get("emails") or b_data.get("social_profiles"):
+                    LeadService.add_enrichment_data(db, lead.id, {
+                        "emails": b_data.get("emails", []),
+                        "social_profiles": b_data.get("social_profiles", []),
+                        "phones": [],
+                    })
+                
                 try:
                     enriched_data = await enricher.enrich_lead(
                         business_name=lead.business_name,
@@ -254,6 +262,14 @@ class DiscoveryService:
 
                 # Create/save lead in DB
                 lead = await LeadService.create_or_update_lead(db, b_data)
+
+                # Attach direct emails/socials from discovery if present (e.g. LocalMapsScraper)
+                if b_data.get("emails") or b_data.get("social_profiles"):
+                    LeadService.add_enrichment_data(db, lead.id, {
+                        "emails": b_data.get("emails", []),
+                        "social_profiles": b_data.get("social_profiles", []),
+                        "phones": [],
+                    })
 
                 # Enrich via multi-source engine
                 try:

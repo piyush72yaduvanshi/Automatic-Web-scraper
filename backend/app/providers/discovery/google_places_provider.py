@@ -7,7 +7,6 @@ import logging
 
 from app.core.config import settings
 from app.providers.discovery.base import BaseDiscoveryProvider
-from app.services.provider_health_service import ProviderHealthService, IntegrationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,8 @@ class GooglePlacesProvider(BaseDiscoveryProvider):
             "query": search_query,
             "key": self.api_key,
         }
+
+        from app.services.provider_health_service import ProviderHealthService, IntegrationStatus
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:

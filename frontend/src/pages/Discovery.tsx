@@ -38,7 +38,7 @@ const Discovery = () => {
     enrich_emails: true,
     enrich_phones: true,
     enrich_socials: true,
-    preferred_provider: 'multi',
+    preferred_provider: 'local_maps',
   });
 
   const [aiEnabled, setAiEnabled] = useState(true);
@@ -372,7 +372,9 @@ const Discovery = () => {
                     onChange={(e) => setFormData({ ...formData, preferred_provider: e.target.value })}
                     className="w-full px-3 py-2 bg-[#0E1424] border border-slate-700 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="multi">Multi-Source Hybrid (SerpAPI + Google Maps + Web)</option>
+                    <option value="local_maps">🌟 Local Google Maps Scraper (100% Free & Unlimited, Port 8080)</option>
+                    <option value="multi">Multi-Source Hybrid (Local Maps + Google Places + SerpAPI)</option>
+                    <option value="google_places">Google Places API (Official Maps Platform)</option>
                     <option value="serpapi">SerpAPI Google Maps (Ultra-Fast 1-2s)</option>
                     <option value="apify">Apify Google Maps Scraper (Deep Run)</option>
                   </select>
