@@ -13,6 +13,7 @@ from app.schemas.discovery import DiscoveryJobCreate
 from app.providers.discovery.orchestrator import MultiSourceDiscoveryOrchestrator
 from app.providers.enrichment.multi_source_enricher import MultiSourceEnricher
 from app.services.lead_service import LeadService
+from app.services.webhook_service import WebhookService
 
 
 class DiscoveryService:
@@ -146,6 +147,22 @@ class DiscoveryService:
             for b_data in businesses:
                 lead = await LeadService.create_or_update_lead(db, b_data)
                 
+                # Dispatch real-time outbound webhook to external subscribers (e.g. PHP CRM)
+                try:
+                    WebhookService.dispatch("lead.discovered", {
+                        "lead_id": str(lead.id),
+                        "business_name": lead.business_name,
+                        "category": lead.category,
+                        "website": lead.website,
+                        "phone": lead.phone,
+                        "city": lead.city,
+                        "state": lead.state,
+                        "country": lead.country,
+                        "source": lead.source_provider,
+                    })
+                except Exception as we:
+                    print(f"Webhook dispatch notice: {we}")
+                
                 # If discovery provider already extracted direct emails/socials (e.g. LocalMapsScraper)
                 if b_data.get("emails") or b_data.get("social_profiles"):
                     LeadService.add_enrichment_data(db, lead.id, {
@@ -262,6 +279,22 @@ class DiscoveryService:
 
                 # Create/save lead in DB
                 lead = await LeadService.create_or_update_lead(db, b_data)
+                
+                # Dispatch real-time outbound webhook to external subscribers (e.g. PHP CRM)
+                try:
+                    WebhookService.dispatch("lead.discovered", {
+                        "lead_id": str(lead.id),
+                        "business_name": lead.business_name,
+                        "category": lead.category,
+                        "website": lead.website,
+                        "phone": lead.phone,
+                        "city": lead.city,
+                        "state": lead.state,
+                        "country": lead.country,
+                        "source": lead.source_provider,
+                    })
+                except Exception as we:
+                    print(f"Webhook dispatch notice: {we}")
 
                 # Attach direct emails/socials from discovery if present (e.g. LocalMapsScraper)
                 if b_data.get("emails") or b_data.get("social_profiles"):

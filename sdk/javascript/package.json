@@ -1,0 +1,13 @@
+{
+  "name": "@aisalescrm/sdk",
+  "version": "1.0.0",
+  "description": "Universal JavaScript and TypeScript SDK for AI Sales CRM OS. Webhooks, discovery, ingestion, and outreach.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "node -e \"console.log('SDK Loaded Successfully')\""
+  },
+  "keywords": ["crm", "ai", "sales", "scraper", "webhooks", "sdk"],
+  "author": "AI Sales CRM Core Team",
+  "license": "MIT"
+}

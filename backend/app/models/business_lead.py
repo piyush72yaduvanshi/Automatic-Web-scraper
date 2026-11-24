@@ -80,6 +80,26 @@ class BusinessLead(Base):
         Index("idx_category_city", "category", "city"),
         Index("idx_created_at", "created_at"),
     )
+
+    @property
+    def email(self):
+        """Helper property to access the primary email address from contacts."""
+        if hasattr(self, "contacts") and self.contacts:
+            for c in self.contacts:
+                ctype = getattr(c, "contact_type", None)
+                if ctype and (ctype == "EMAIL" or getattr(ctype, "value", "") == "EMAIL"):
+                    return getattr(c, "original_value", None) or getattr(c, "normalized_value", None)
+        return None
+
+    @property
+    def phone(self):
+        """Helper property to access the primary phone number from contacts."""
+        if hasattr(self, "contacts") and self.contacts:
+            for c in self.contacts:
+                ctype = getattr(c, "contact_type", None)
+                if ctype and (ctype == "PHONE" or getattr(ctype, "value", "") == "PHONE"):
+                    return getattr(c, "original_value", None) or getattr(c, "normalized_value", None)
+        return None
     
     def __repr__(self):
         return f"<BusinessLead(id={self.id}, name='{self.business_name}', city='{self.city}')>"

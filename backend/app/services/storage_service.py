@@ -15,6 +15,7 @@ from urllib.parse import urljoin
 try:
     from minio import Minio
     from minio.error import S3Error
+    import urllib3
     MINIO_LIB_AVAILABLE = True
 except ImportError:
     MINIO_LIB_AVAILABLE = False
@@ -43,11 +44,16 @@ class MinIOStorageService:
             try:
                 # Strip protocol if present in endpoint
                 endpoint = settings.MINIO_ENDPOINT.replace("http://", "").replace("https://", "").rstrip("/")
+                http_client = urllib3.PoolManager(
+                    timeout=urllib3.Timeout(connect=2.0, read=4.0),
+                    retries=urllib3.Retry(total=1, backoff_factor=0.1)
+                )
                 cls._client = Minio(
                     endpoint=endpoint,
                     access_key=settings.MINIO_ACCESS_KEY,
                     secret_key=settings.MINIO_SECRET_KEY,
                     secure=settings.MINIO_SECURE,
+                    http_client=http_client,
                 )
                 logger.info(f"Initialized MinIO client connected to {endpoint}")
             except Exception as e:

@@ -112,6 +112,12 @@ from app.models.automation import (
     LeadException,
 )
 
+# Webhook Models
+from app.models.webhook import (
+    WebhookSubscription,
+    WebhookDelivery,
+)
+
 __all__ = [
     "GUID",
     "BusinessLead",
@@ -178,4 +184,6 @@ __all__ = [
     "InboundMessage",
     "AutomationSettings",
     "LeadException",
+    "WebhookSubscription",
+    "WebhookDelivery",
 ]
