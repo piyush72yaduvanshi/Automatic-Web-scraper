@@ -35,9 +35,35 @@ def health_check(db: Session = Depends(get_db)):
     except Exception:
         redis_status = "unavailable"
     
+    # Check MinIO (optional)
+    minio_status = None
+    try:
+        from minio import Minio
+        minio_endpoint = getattr(settings, 'MINIO_ENDPOINT', None)
+        if minio_endpoint:
+            minio_client = Minio(
+                minio_endpoint,
+                access_key=getattr(settings, 'MINIO_ACCESS_KEY', 'minioadmin'),
+                secret_key=getattr(settings, 'MINIO_SECRET_KEY', 'minioadmin'),
+                secure=getattr(settings, 'MINIO_SECURE', False)
+            )
+            # Test connection by listing buckets
+            list(minio_client.list_buckets())
+            minio_status = "healthy"
+    except Exception:
+        minio_status = "unavailable"
+    
+    overall_status = "healthy" if all(
+        s in ["healthy", None] or s == "unavailable" 
+        for s in [db_status, redis_status, minio_status]
+    ) and db_status == "healthy" else "degraded"
+    
     return {
-        "status": "healthy" if db_status == "healthy" else "degraded",
+        "status": overall_status,
+        "overall": overall_status,
         "database": db_status,
+        "postgres": db_status,
         "redis": redis_status,
-        "version": "1.0.0",
+        "minio": minio_status,
+        "version": "2.5.0",
     }

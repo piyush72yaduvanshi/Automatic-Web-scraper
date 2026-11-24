@@ -1,8 +1,9 @@
 """Leads API endpoints."""
 
-from typing import List, Optional
+import logging
+from typing import List, Optional, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Body
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import csv
@@ -15,6 +16,9 @@ from app.schemas.lead import (
     LeadListResponse,
 )
 from app.services import LeadService
+from app.services.lead_automation_orchestrator import LeadAutomationOrchestrator
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -177,7 +181,7 @@ async def quick_scan_business(
         domain = urlparse(website).netloc or website
         business_name = domain.replace("www.", "").split(".")[0].capitalize()
 
-    lead = LeadService.create_or_update_lead(db, {
+    lead = await LeadService.create_or_update_lead(db, {
         "business_name": business_name,
         "website": website,
         "category": category,
@@ -261,4 +265,207 @@ def delete_lead(
     db.delete(lead)
     db.commit()
     return {"message": "Lead deleted successfully", "id": str(lead_id)}
+
+
+from app.services.lead_qualification_service import LeadQualificationService
+from app.services.company_intelligence_service import CompanyIntelligenceService
+
+
+@router.post("/{lead_id}/qualify")
+async def qualify_lead(
+    lead_id: UUID,
+    payload: Dict[str, Any] = Body(default={}),
+    db: Session = Depends(get_db),
+):
+    """Run AI Lead Qualification against Ideal Customer Profile."""
+    try:
+        icp = payload.get("icp_profile")
+        weights = payload.get("weights")
+        result = await LeadQualificationService.qualify_lead(
+            lead_id=str(lead_id),
+            db=db,
+            icp_profile=icp,
+            custom_weights=weights,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Qualification failed: {str(e)}")
+
+
+@router.post("/{lead_id}/research")
+async def research_lead(
+    lead_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """Generate in-depth Company Intelligence research report with verified vs inferred separation."""
+    try:
+        report = await CompanyIntelligenceService.analyze_company(
+            lead_id=str(lead_id),
+            db=db,
+        )
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Research failed: {str(e)}")
+
+
+@router.post("/{lead_id}/feedback")
+def submit_qualification_feedback(
+    lead_id: UUID,
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Manually correct qualification score or status with transparent audit logging."""
+    try:
+        res = LeadQualificationService.apply_manual_feedback(
+            lead_id=str(lead_id),
+            new_score=payload.get("new_score"),
+            new_status=payload.get("new_status"),
+            reason=payload.get("reason", "Manual user review adjustment"),
+            db=db,
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/manual")
+async def create_manual_lead(
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Manually add a business lead to the discovery registry."""
+    business_name = payload.get("business_name")
+    if not business_name:
+        raise HTTPException(status_code=400, detail="business_name is required")
+
+    lead_data = {
+        "business_name": business_name,
+        "category": payload.get("category"),
+        "website": payload.get("website"),
+        "city": payload.get("city"),
+        "state": payload.get("state"),
+        "country": payload.get("country", "India"),
+        "address": payload.get("address"),
+        "description": payload.get("description"),
+        "source_provider": "manual_entry",
+        "provider_external_id": f"manual_{uuid.uuid4().hex[:12]}",
+    }
+    lead = await LeadService.create_or_update_lead(db, lead_data)
+
+    # Add contacts if provided
+    if payload.get("email"):
+        from app.models.lead_contact import ContactType
+        LeadService.add_contact(
+            db,
+            lead.id,
+            ContactType.EMAIL,
+            payload["email"],
+            payload["email"].lower().strip(),
+            "manual_verified",
+        )
+    if payload.get("phone"):
+        from app.models.lead_contact import ContactType
+        LeadService.add_contact(
+            db,
+            lead.id,
+            ContactType.PHONE,
+            payload["phone"],
+            payload["phone"].strip(),
+            "manual_verified",
+        )
+
+    db.commit()
+    db.refresh(lead)
+    return {"message": "Lead created successfully", "lead_id": str(lead.id)}
+
+
+@router.post("/import/csv")
+async def import_leads_csv(
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Import leads from tabular CSV JSON payload."""
+    rows = payload.get("rows", [])
+    if not rows:
+        raise HTTPException(status_code=400, detail="rows array is required")
+
+    imported = 0
+    from app.models.lead_contact import ContactType
+    for row in rows:
+        name = row.get("business_name") or row.get("name") or row.get("company")
+        if not name:
+            continue
+        lead_data = {
+            "business_name": name,
+            "category": row.get("category") or row.get("industry"),
+            "website": row.get("website") or row.get("url"),
+            "city": row.get("city"),
+            "state": row.get("state"),
+            "country": row.get("country", "India"),
+            "source_provider": "csv_import",
+            "provider_external_id": f"csv_{uuid.uuid4().hex[:12]}",
+        }
+        lead = await LeadService.create_or_update_lead(db, lead_data)
+
+        email = row.get("email")
+        if email:
+            LeadService.add_contact(db, lead.id, ContactType.EMAIL, email, email.lower().strip(), "csv_imported")
+
+        phone = row.get("phone")
+        if phone:
+            LeadService.add_contact(db, lead.id, ContactType.PHONE, phone, str(phone).strip(), "csv_imported")
+
+        imported += 1
+
+    db.commit()
+    return {"message": f"Successfully imported {imported} leads from CSV", "count": imported}
+
+
+@router.post("/bulk-process")
+async def bulk_process_leads(
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Process multiple leads through complete automation pipeline.
+    
+    Filters:
+    - status: "enriched", "discovered", etc.
+    - qualification_status: "New", "Qualified", "Maybe"
+    - min_score: int (default: 0)
+    - batch_size: int (default: 50, max: 500)
+    
+    Actions performed:
+    1. Email enrichment (if missing)
+    2. Lead qualification (if not qualified)
+    3. Auto-enroll in outreach (if score >= threshold)
+    4. Auto-convert to CRM (if score >= threshold)
+    """
+    try:
+        filters = {
+            "status": payload.get("status"),
+            "qualification_status": payload.get("qualification_status"),
+            "min_score": payload.get("min_score", 0),
+            "has_email": payload.get("has_email")
+        }
+        
+        batch_size = min(payload.get("batch_size", 50), 500)
+        
+        result = await LeadAutomationOrchestrator.bulk_process_leads(
+            filters=filters,
+            batch_size=batch_size,
+            db=db
+        )
+        
+        return {
+            "success": True,
+            "summary": result,
+            "message": f"Processed {result['processed']} leads: {result['enrolled']} enrolled, {result['converted']} converted to CRM"
+        }
+    except Exception as e:
+        logger.error(f"Bulk processing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 

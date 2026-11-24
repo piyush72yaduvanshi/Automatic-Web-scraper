@@ -1,0 +1,24 @@
+{
+  "name": "aisalescrm/sdk",
+  "description": "Official PHP SDK for AI Sales CRM OS. Zero dependencies, pure cURL, drops seamlessly into any PHP CRM (Laravel, WordPress, CodeIgniter, Core PHP).",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "AI Sales CRM Core Team",
+      "email": "dev@aisalescrm.local"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "ext-hash": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "AiSalesCrm\\": "src/"
+    }
+  },
+  "minimum-stability": "stable"
+}

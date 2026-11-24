@@ -99,47 +99,38 @@ const Leads = () => {
   // Quick Scan New Business via Modal
   const handleQuickScanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!scanForm.business_name && !scanForm.website) return;
+    if (!scanForm.business_name.trim()) return;
 
     setIsScanningNew(true);
-    setScanStatusMsg('⚡ Initiating multi-source scan across Google Maps, Web, and AI...');
+    setScanStatusMsg('Scanning website, Google Maps, and AI verification...');
 
     try {
-      await api.post('/leads/quick-scan', scanForm);
-      setScanStatusMsg('✅ Business scanned and enriched successfully!');
+      const res = await api.post('/leads/scan-new', scanForm);
+      setScanStatusMsg(`Discovery completed: "${res.data.business_name}" saved!`);
+      await refetch();
       setTimeout(() => {
         setIsModalOpen(false);
-        setIsScanningNew(false);
         setScanStatusMsg('');
         setScanForm({ business_name: '', website: '', city: '', category: 'Dentist' });
-        refetch();
-      }, 1000);
+      }, 1500);
     } catch (err: any) {
-      setScanStatusMsg(`❌ Error: ${err.response?.data?.detail || err.message}`);
+      setScanStatusMsg(`Scan error: ${err.response?.data?.detail || err.message}`);
+    } finally {
       setIsScanningNew(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-        <p className="text-sm text-gray-500 font-medium">Loading discovered leads...</p>
-      </div>
-    );
-  }
-
   if (isError) {
     return (
-      <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-center space-y-4">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-        <h3 className="text-lg font-bold text-red-900">Failed to load leads</h3>
-        <p className="text-sm text-red-700 max-w-md mx-auto">
+      <div className="p-8 bg-red-950/40 border border-red-500/30 rounded-2xl text-center space-y-4">
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+        <h3 className="text-lg font-bold text-red-200">Failed to load leads</h3>
+        <p className="text-sm text-red-300 max-w-md mx-auto">
           {(error as any)?.message || 'Could not connect to the backend server. Please verify your connection.'}
         </p>
         <button
           onClick={() => refetch()}
-          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
+          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 shadow-md"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Retry Now
@@ -149,49 +140,59 @@ const Leads = () => {
   }
 
   return (
-    <div className="px-4 sm:px-0 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Discovered Business Leads</h1>
-          <p className="text-gray-600 mt-1">
-            {data?.total || 0} total verified business leads with phones, emails, and social footprints
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <Search className="w-5 h-5" />
+              </span>
+              Discovered Business Leads
+            </h1>
+            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              {data?.total || 0} Total Leads
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1.5">
+            Verified business leads with enriched phones, emails, decision-maker profiles, and social footprints.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center px-3.5 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 text-sm font-semibold shadow-sm transition-colors disabled:opacity-50"
+            className="inline-flex items-center px-3.5 py-2 bg-[#0E1424] hover:bg-[#131B2E] text-slate-300 border border-slate-800 rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 mr-1.5 ${isFetching ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isFetching ? 'animate-spin text-indigo-400' : ''}`} />
             Refresh
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-sm text-sm"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
           >
-            <Plus className="w-4 h-4 mr-1.5" />
-            ⚡ Quick Scan Business
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Quick Scan Business
           </button>
 
           <button
             onClick={handleExport}
-            className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold text-sm shadow-sm"
+            className="inline-flex items-center px-3.5 py-2 bg-emerald-600/90 hover:bg-emerald-600 text-white rounded-xl font-semibold text-xs shadow-md transition-colors"
           >
-            <Download className="w-4 h-4 mr-1.5" />
+            <Download className="w-3.5 h-3.5 mr-1.5" />
             Export CSV
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filters Bar */}
+      <div className="bg-[#0E1424] rounded-2xl shadow-sm border border-slate-800 p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Search</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Search</label>
             <input
               type="text"
               value={filters.search}
@@ -199,13 +200,13 @@ const Leads = () => {
                 setPage(1);
                 setFilters({ ...filters, search: e.target.value });
               }}
-              placeholder="Business name or category"
-              className="w-full px-3.5 py-2.5 bg-white text-gray-900 placeholder-gray-400 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              placeholder="Business name or category..."
+              className="w-full px-3.5 py-2.5 bg-[#131B2E] text-white placeholder-slate-500 border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">City</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">City</label>
             <input
               type="text"
               value={filters.city}
@@ -213,13 +214,13 @@ const Leads = () => {
                 setPage(1);
                 setFilters({ ...filters, city: e.target.value });
               }}
-              placeholder="Filter by city (e.g. Lucknow, Mumbai)"
-              className="w-full px-3.5 py-2.5 bg-white text-gray-900 placeholder-gray-400 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              placeholder="Filter by city (e.g. Lucknow, Austin)..."
+              className="w-full px-3.5 py-2.5 bg-[#131B2E] text-white placeholder-slate-500 border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Has Email</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Has Email</label>
             <select
               value={filters.has_email === undefined ? '' : String(filters.has_email)}
               onChange={(e) => {
@@ -229,7 +230,7 @@ const Leads = () => {
                   has_email: e.target.value === '' ? undefined : e.target.value === 'true',
                 });
               }}
-              className="w-full px-3.5 py-2.5 bg-white text-gray-900 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              className="w-full px-3.5 py-2.5 bg-[#131B2E] text-white border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
             >
               <option value="">All</option>
               <option value="true">Yes (Verified Emails)</option>
@@ -238,7 +239,7 @@ const Leads = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Has Phone</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Has Phone</label>
             <select
               value={filters.has_phone === undefined ? '' : String(filters.has_phone)}
               onChange={(e) => {
@@ -248,7 +249,7 @@ const Leads = () => {
                   has_phone: e.target.value === '' ? undefined : e.target.value === 'true',
                 });
               }}
-              className="w-full px-3.5 py-2.5 bg-white text-gray-900 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              className="w-full px-3.5 py-2.5 bg-[#131B2E] text-white border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm"
             >
               <option value="">All</option>
               <option value="true">Yes (Verified Phone)</option>
@@ -259,44 +260,49 @@ const Leads = () => {
       </div>
 
       {/* Leads Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        {data && data.items && data.items.length > 0 ? (
+      <div className="bg-[#0E1424] rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
+        {isLoading ? (
+          <div className="p-16 text-center text-sm text-slate-400 flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+            <span>Synchronizing business directory...</span>
+          </div>
+        ) : data && data.items && data.items.length > 0 ? (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50/80">
+              <table className="min-w-full divide-y divide-slate-800/80">
+                <thead className="bg-[#131B2E]/70">
                   <tr>
-                    <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Business Details
                     </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Location
                     </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Discovered Contacts
                     </th>
-                    <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Source
                     </th>
-                    <th className="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-800/70">
                   {data.items.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-blue-50/30 transition-colors">
+                    <tr key={lead.id} className="hover:bg-[#131B2E]/60 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900 text-sm hover:text-blue-600">
+                        <div className="font-bold text-white text-sm hover:text-indigo-400 transition-colors">
                           <Link to={`/leads/${lead.id}`}>{lead.business_name}</Link>
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">{lead.category || 'General'}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{lead.category || 'General Business'}</div>
                         {lead.website && (
                           <a
                             href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-0.5 mt-1"
+                            className="text-[11px] text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 mt-1 transition-colors"
                           >
                             <span>Website</span>
                             <ExternalLink className="w-2.5 h-2.5" />
@@ -304,50 +310,52 @@ const Leads = () => {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-xs text-gray-900">
-                        <div className="font-medium">{lead.city || 'N/A'}</div>
-                        <div className="text-gray-500">{[lead.state, lead.country].filter(Boolean).join(', ')}</div>
+                      <td className="px-6 py-4 text-xs text-slate-300">
+                        <div className="font-medium text-white">{lead.city || 'N/A'}</div>
+                        <div className="text-slate-400 text-[11px]">
+                          {[lead.state, lead.country].filter(Boolean).join(', ')}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-2 text-xs">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                               (lead.email_count || 0) > 0
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-500'
+                                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                                : 'bg-slate-800 text-slate-500'
                             }`}
                           >
-                            <Mail className="w-3.5 h-3.5 mr-1" />
+                            <Mail className="w-3 h-3 mr-1" />
                             {lead.email_count || 0}
                           </span>
 
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                               (lead.phone_count || 0) > 0
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-gray-100 text-gray-500'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-slate-800 text-slate-500'
                             }`}
                           >
-                            <Phone className="w-3.5 h-3.5 mr-1" />
+                            <Phone className="w-3 h-3 mr-1" />
                             {lead.phone_count || 0}
                           </span>
 
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                               (lead.social_count || 0) > 0
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-500'
+                                ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                : 'bg-slate-800 text-slate-500'
                             }`}
                           >
-                            <Share2 className="w-3.5 h-3.5 mr-1" />
+                            <Share2 className="w-3 h-3 mr-1" />
                             {lead.social_count || 0}
                           </span>
                         </div>
                       </td>
 
                       <td className="px-6 py-4 text-xs">
-                        <span className="px-2.5 py-1 bg-slate-100 text-slate-700 font-semibold rounded-full border border-slate-200">
+                        <span className="px-2.5 py-1 bg-slate-800 text-slate-300 font-semibold rounded-full border border-slate-700/80 text-[10px]">
                           {lead.source_provider}
                         </span>
                       </td>
@@ -356,7 +364,7 @@ const Leads = () => {
                         <button
                           onClick={() => handleScanRow(lead.id)}
                           disabled={scanningLeadId === lead.id}
-                          className="inline-flex items-center px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-semibold border border-indigo-200 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg font-semibold border border-indigo-500/30 transition-colors disabled:opacity-50"
                         >
                           {scanningLeadId === lead.id ? (
                             <>
@@ -365,7 +373,7 @@ const Leads = () => {
                             </>
                           ) : (
                             <>
-                              <Zap className="w-3 h-3 mr-1 text-indigo-600 fill-indigo-600" />
+                              <Zap className="w-3 h-3 mr-1 text-indigo-400 fill-indigo-400" />
                               Scan
                             </>
                           )}
@@ -373,7 +381,7 @@ const Leads = () => {
 
                         <Link
                           to={`/leads/${lead.id}`}
-                          className="inline-flex items-center px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg font-semibold border border-gray-200"
+                          className="inline-flex items-center px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-semibold border border-slate-700/80 transition-colors"
                         >
                           Details
                         </Link>
@@ -381,7 +389,7 @@ const Leads = () => {
                         <button
                           onClick={() => handleDeleteRow(lead.id)}
                           disabled={deletingLeadId === lead.id}
-                          className="inline-flex items-center px-2 py-1.5 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg border border-gray-200 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center px-2 py-1.5 bg-slate-800/60 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700/60 transition-colors disabled:opacity-50"
                           title="Delete Lead"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -395,22 +403,22 @@ const Leads = () => {
 
             {/* Pagination */}
             {(data.total_pages || 1) > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-xs font-semibold text-gray-700">
+              <div className="px-6 py-4 border-t border-slate-800 flex items-center justify-between">
+                <div className="text-xs font-semibold text-slate-400">
                   Showing page {data.page} of {data.total_pages} ({data.total} total leads)
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={data.page === 1}
-                    className="px-4 py-2 text-xs font-bold text-gray-900 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center"
+                    className="px-3.5 py-1.5 text-xs font-bold text-slate-300 bg-[#131B2E] border border-slate-700 rounded-xl hover:bg-slate-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center"
                   >
                     &larr; Previous
                   </button>
                   <button
                     onClick={() => setPage((p) => p + 1)}
                     disabled={data.page >= (data.total_pages || 1)}
-                    className="px-4 py-2 text-xs font-bold text-gray-900 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center"
+                    className="px-3.5 py-1.5 text-xs font-bold text-slate-300 bg-[#131B2E] border border-slate-700 rounded-xl hover:bg-slate-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center"
                   >
                     Next &rarr;
                   </button>
@@ -420,9 +428,9 @@ const Leads = () => {
           </>
         ) : (
           <div className="text-center py-16">
-            <Search className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-base font-bold text-gray-900">No leads found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Search className="mx-auto h-12 w-12 text-slate-600" />
+            <h3 className="mt-2 text-base font-bold text-white">No leads found</h3>
+            <p className="mt-1 text-xs text-slate-400">
               Try adjusting your search filters or use "Quick Scan Business" to extract leads.
             </p>
           </div>
@@ -431,84 +439,84 @@ const Leads = () => {
 
       {/* Quick Scan Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#0E1424] rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-800 relative animate-in fade-in zoom-in-95 text-white">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+              className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-800/80 pb-4">
+              <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">⚡ Instant Multi-Source Scan</h3>
-                <p className="text-xs text-gray-500">Scan any business or website across Google Maps, Web, & AI.</p>
+                <h3 className="text-base font-bold text-white">Instant Multi-Source Scan</h3>
+                <p className="text-xs text-slate-400">Scan any business or website across Google Maps, Web, & AI.</p>
               </div>
             </div>
 
             <form onSubmit={handleQuickScanSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Business Name *</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Business Name *</label>
                 <input
                   type="text"
                   required
                   value={scanForm.business_name}
                   onChange={(e) => setScanForm({ ...scanForm, business_name: e.target.value })}
                   placeholder="e.g. Apex Dental Hospital"
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Website URL (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Website URL (Optional)</label>
                 <input
                   type="text"
                   value={scanForm.website}
                   onChange={(e) => setScanForm({ ...scanForm, website: e.target.value })}
                   placeholder="https://example.com"
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">City / Region</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">City / Region</label>
                   <input
                     type="text"
                     value={scanForm.city}
                     onChange={(e) => setScanForm({ ...scanForm, city: e.target.value })}
                     placeholder="e.g. Lucknow"
-                    className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Category</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Category</label>
                   <input
                     type="text"
                     value={scanForm.category}
                     onChange={(e) => setScanForm({ ...scanForm, category: e.target.value })}
                     placeholder="e.g. Dentist"
-                    className="w-full px-3.5 py-2 border border-gray-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 bg-[#131B2E] border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               {scanStatusMsg && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 font-medium">
+                <div className="p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-xs text-indigo-300 font-medium">
                   {scanStatusMsg}
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-50"
+                  className="px-4 py-2 border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
@@ -516,16 +524,16 @@ const Leads = () => {
                 <button
                   type="submit"
                   disabled={isScanningNew}
-                  className="inline-flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-50"
+                  className="inline-flex items-center px-5 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition-all disabled:opacity-50"
                 >
                   {isScanningNew ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                       Scanning Sources...
                     </>
                   ) : (
                     <>
-                      <Zap className="w-4 h-4 mr-1.5 fill-white" />
+                      <Zap className="w-3.5 h-3.5 mr-1.5 fill-white" />
                       Start Instant Scan
                     </>
                   )}

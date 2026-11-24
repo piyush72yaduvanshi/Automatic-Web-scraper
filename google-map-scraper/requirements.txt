@@ -1,0 +1,7 @@
+# Google Maps Scraper Engine — Requirements
+# 
+# Core engine (engine/serve.py) runs on 100% Python Standard Library.
+# Zero pip packages required to run Maps discovery, extraction, and API serving!
+#
+# Optional: Install playwright only if you need full client-side JavaScript rendering for business websites:
+# playwright>=1.40.0

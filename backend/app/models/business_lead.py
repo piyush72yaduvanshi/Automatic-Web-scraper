@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, Index
+from sqlalchemy import Column, String, Text, DateTime, Index, Float, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -35,8 +35,23 @@ class BusinessLead(Base):
     source_provider = Column(String(100), nullable=False)
     provider_external_id = Column(String(500), unique=True)
     
-    # Status
+    # Status & Qualification
     status = Column(String(50), default="discovered", index=True)
+    qualification_score = Column(Float, nullable=True, default=50.0)
+    qualification_status = Column(String(50), default="New", index=True)
+    qualification_reasoning = Column(Text, nullable=True)
+    qualification_breakdown = Column(Text, nullable=True)  # JSON
+    company_research = Column(Text, nullable=True)  # JSON
+    data_confidence_score = Column(Float, default=50.0)
+    company_id = Column(UUID(as_uuid=True), nullable=True)
+    
+    # Automation tracking
+    outreach_enrolled = Column(Boolean, default=False, server_default='false', index=True)
+    outreach_enrollment_date = Column(DateTime, nullable=True)
+    crm_converted = Column(Boolean, default=False, server_default='false', index=True)
+    crm_conversion_date = Column(DateTime, nullable=True)
+    email_enrichment_status = Column(String(50), default='pending', server_default='pending')
+    last_automation_run = Column(DateTime, nullable=True)
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -65,6 +80,26 @@ class BusinessLead(Base):
         Index("idx_category_city", "category", "city"),
         Index("idx_created_at", "created_at"),
     )
+
+    @property
+    def email(self):
+        """Helper property to access the primary email address from contacts."""
+        if hasattr(self, "contacts") and self.contacts:
+            for c in self.contacts:
+                ctype = getattr(c, "contact_type", None)
+                if ctype and (ctype == "EMAIL" or getattr(ctype, "value", "") == "EMAIL"):
+                    return getattr(c, "original_value", None) or getattr(c, "normalized_value", None)
+        return None
+
+    @property
+    def phone(self):
+        """Helper property to access the primary phone number from contacts."""
+        if hasattr(self, "contacts") and self.contacts:
+            for c in self.contacts:
+                ctype = getattr(c, "contact_type", None)
+                if ctype and (ctype == "PHONE" or getattr(ctype, "value", "") == "PHONE"):
+                    return getattr(c, "original_value", None) or getattr(c, "normalized_value", None)
+        return None
     
     def __repr__(self):
         return f"<BusinessLead(id={self.id}, name='{self.business_name}', city='{self.city}')>"

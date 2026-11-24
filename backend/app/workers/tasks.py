@@ -63,3 +63,32 @@ def execute_discovery_job(self, job_id: str):
         # Log error
         print(f"Job {job_id} failed: {str(e)}")
         raise
+
+
+@celery_app.task(bind=True, base=DatabaseTask, name="app.workers.tasks.publish_scheduled_social_posts")
+def publish_scheduled_social_posts(self):
+    """Celery background task: find and publish due scheduled social posts."""
+    from app.services.social_service import SocialService
+    db = self.session
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        res = loop.run_until_complete(SocialService.run_scheduled_publishing(db))
+        return res
+    finally:
+        loop.close()
+
+
+@celery_app.task(bind=True, base=DatabaseTask, name="app.workers.tasks.sync_social_metrics_task")
+def sync_social_metrics_task(self):
+    """Celery background task: fetch live platform metrics for published social posts."""
+    from app.services.social_service import SocialService
+    db = self.session
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        res = loop.run_until_complete(SocialService.sync_platform_metrics(db))
+        return res
+    finally:
+        loop.close()
+

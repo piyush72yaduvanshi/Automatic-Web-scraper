@@ -1,0 +1,33 @@
+# Google Maps Scraper Engine - Production Docker Compose
+# Serves the high-performance headless Chromium scraping microservice on http://localhost:8080 (or your server's IP)
+
+services:
+  google-maps-scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gmaps_scraper_engine
+    restart: unless-stopped
+    init: true  # Reaps Chromium processes properly to prevent zombie PIDs
+    stop_grace_period: 20s
+    environment:
+      - SCRAPER_PORT=${SCRAPER_PORT:-8080}
+      - SCRAPER_HOST=0.0.0.0
+      - SCRAPER_ALLOW_REMOTE=${SCRAPER_ALLOW_REMOTE:-1}
+      - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
+      - SCRAPER_HEADLESS=1
+    ports:
+      # Exposes port on host (default: 8080). Can be customized via SCRAPER_PORT in .env
+      - "${SCRAPER_HOST:-0.0.0.0}:${SCRAPER_PORT:-8080}:8080"
+    volumes:
+      - engine_data:/kit/.engine/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/v1/jobs', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  engine_data:
+    name: gmaps_scraper_data

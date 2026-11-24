@@ -5,7 +5,28 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
+# Register SQLite cross-dialect compilers for PostgreSQL and pgvector types
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return "TEXT"
+
+@compiles(UUID, "sqlite")
+def compile_uuid_sqlite(type_, compiler, **kw):
+    return "CHAR(36)"
+
+try:
+    from pgvector.sqlalchemy import Vector
+    @compiles(Vector, "sqlite")
+    def compile_vector_sqlite(type_, compiler, **kw):
+        return "TEXT"
+except ImportError:
+    pass
+
 from app.core.database import Base, get_db
+import app.models  # Ensure all models are registered in metadata
 from main import app
 
 # Test database URL

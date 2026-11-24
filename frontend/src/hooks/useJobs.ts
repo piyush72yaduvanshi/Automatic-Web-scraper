@@ -15,6 +15,14 @@ export const useJobs = (params: UseJobsParams) => {
       const { data } = await api.get<PaginatedResponse<DiscoveryJob>>('/discovery/jobs', { params });
       return data;
     },
+    refetchInterval: (query) => {
+      // Auto-refresh every 10 seconds if any jobs are running
+      const data = query.state.data;
+      const hasRunning = data?.items?.some(job => 
+        job.status === 'RUNNING' || job.status === 'QUEUED'
+      );
+      return hasRunning ? 10000 : false;
+    },
   });
 };
 

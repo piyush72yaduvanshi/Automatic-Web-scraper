@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, desc
+import logging
 
 from app.models import (
     BusinessLead,
@@ -14,13 +15,16 @@ from app.models import (
     LeadSourceEvidence,
 )
 from app.extractors import PhoneExtractor
+from app.services.workflow_engine_service import WorkflowEngineService
+
+logger = logging.getLogger(__name__)
 
 
 class LeadService:
     """Service for business lead operations."""
     
     @staticmethod
-    def create_or_update_lead(db: Session, lead_data: Dict[str, Any]) -> BusinessLead:
+    async def create_or_update_lead(db: Session, lead_data: Dict[str, Any]) -> BusinessLead:
         """
         Create or update a business lead and attach initial contact info if present.
         """
@@ -45,6 +49,7 @@ class LeadService:
         valid_columns = {c.name for c in BusinessLead.__table__.columns}
         clean_data = {k: v for k, v in data.items() if k in valid_columns}
 
+        is_new_lead = False
         if existing_lead:
             # Update existing lead with non-null values
             for key, value in clean_data.items():
@@ -59,6 +64,7 @@ class LeadService:
             db.add(lead)
             db.commit()
             db.refresh(lead)
+            is_new_lead = True
 
         # Add initial phone if discovered directly (e.g. from Google Maps card)
         if initial_phone:
@@ -78,6 +84,24 @@ class LeadService:
                     source_url="https://maps.google.com",
                 ))
                 db.commit()
+
+        # Emit NEW_LEAD event for workflow automation
+        if is_new_lead:
+            try:
+                await WorkflowEngineService.emit_event(
+                    event_type="NEW_LEAD",
+                    payload={
+                        "lead_id": str(lead.id),
+                        "business_name": lead.business_name,
+                        "category": lead.category,
+                        "city": lead.city,
+                        "website": lead.website,
+                    },
+                    db=db,
+                )
+                logger.info(f"✅ NEW_LEAD event emitted for lead_id={lead.id}, business_name={lead.business_name}")
+            except Exception as e:
+                logger.error(f"❌ Failed to emit NEW_LEAD event for lead_id={lead.id}: {e}")
 
         return lead
     
