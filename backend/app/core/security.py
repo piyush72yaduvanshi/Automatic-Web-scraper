@@ -49,38 +49,39 @@ def is_safe_url(url: str) -> Tuple[bool, str]:
         Tuple of (is_safe, error_message)
     """
     try:
+        import ipaddress
         parsed = urlparse(url)
         hostname = parsed.hostname
         
         if not hostname:
             return False, "Invalid URL: no hostname"
         
-        # Block localhost and loopback
-        if hostname.lower() in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+        # Block localhost names
+        if hostname.lower() in ['localhost', '0.0.0.0', '::1']:
             return False, "Localhost and loopback addresses are not allowed"
         
-        # Block private IP ranges
-        # 10.0.0.0/8
-        if hostname.startswith('10.'):
-            return False, "Private IP addresses are not allowed"
-        
-        # 172.16.0.0/12
-        if hostname.startswith('172.'):
-            second_octet = int(hostname.split('.')[1]) if len(hostname.split('.')) > 1 else 0
-            if 16 <= second_octet <= 31:
+        # Check IP address properties if hostname is an IP
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_loopback:
+                return False, "Localhost and loopback addresses are not allowed"
+            if ip.is_private:
                 return False, "Private IP addresses are not allowed"
+            if ip.is_link_local:
+                return False, "Link-local and cloud metadata endpoints are not allowed"
+            if ip.is_reserved or ip.is_unspecified:
+                return False, "Reserved IP addresses are not allowed"
+        except ValueError:
+            # It's a domain name (not raw IP)
+            pass
         
-        # 192.168.0.0/16
-        if hostname.startswith('192.168.'):
+        # Fallback string checks for non-resolved prefixes
+        if hostname.startswith('127.'):
+            return False, "Localhost and loopback addresses are not allowed"
+        if hostname.startswith('10.') or hostname.startswith('192.168.'):
             return False, "Private IP addresses are not allowed"
-        
-        # Block cloud metadata endpoints
-        if hostname == '169.254.169.254':
-            return False, "Cloud metadata endpoints are not allowed"
-        
-        # Block link-local addresses
         if hostname.startswith('169.254.'):
-            return False, "Link-local addresses are not allowed"
+            return False, "Cloud metadata endpoints are not allowed"
         
         return True, None
         

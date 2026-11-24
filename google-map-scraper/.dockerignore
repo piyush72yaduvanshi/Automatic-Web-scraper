@@ -1,4 +1,5 @@
 # Only the engine goes into the image: never .env, scraped results or .engine/ (jobs, a downloaded Chrome).
 *
 !engine
+!scripts
 **/__pycache__
