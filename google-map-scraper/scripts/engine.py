@@ -52,8 +52,9 @@ def public_port():
         port = u.port
     except ValueError:
         sys.exit(f"✗ SCRAPER_PORT (or SCRAPER_BASE_URL) is not a valid port: {scrape.BASE}. Set a number from 1 to 65535 in .env.")
-    if u.hostname not in ("localhost", "127.0.0.1", "::1"):
-        sys.exit(f"✗ SCRAPER_BASE_URL points at {scrape.BASE}; engine.py runs the engine on this machine only.")
+    allow_remote = os.environ.get("SCRAPER_ALLOW_REMOTE", "0").lower() in ("1", "true", "yes")
+    if not allow_remote and u.hostname not in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+        sys.exit(f"✗ SCRAPER_BASE_URL points at {scrape.BASE}; engine.py runs the engine on this machine only (set SCRAPER_ALLOW_REMOTE=1 to override).")
     return port or (443 if u.scheme == "https" else 80)
 
 
@@ -386,12 +387,8 @@ def latest_release(now=None):
 
 
 def update_hint():
-    """Print one line when a newer kit is released. Off with SCRAPER_NO_UPDATE_CHECK=1 (environment or .env)."""
-    if os.environ.get("SCRAPER_NO_UPDATE_CHECK", "").strip().lower() in ("1", "true", "yes"):
-        return
-    mine, tag = local_version(), latest_release()
-    if mine and re.match(r"^v?\d+\.\d+\.\d+", tag) and newer(tag, mine):
-        print(f"↑ Kit {tag} is out (this copy is v{mine}). Update: bash scripts/update.sh  ·  {RELEASE_PAGE}")
+    """Update check disabled for standalone production server deployment."""
+    pass
 
 
 JOB_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")

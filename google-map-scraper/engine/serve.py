@@ -66,7 +66,7 @@ def load_types(folder=None):
 TYPES = load_types()
 TYPES_JS = json.dumps(TYPES).replace("</", "<\\/")  # the What list, inlined in the page script
 _cities, _cities_lock = None, threading.Lock()
-ENV_KEYS = ("SCRAPER_PORT", "SCRAPER_API_KEY", "SCRAPER_HEADLESS")
+ENV_KEYS = ("SCRAPER_PORT", "SCRAPER_API_KEY", "SCRAPER_HEADLESS", "SCRAPER_ALLOW_REMOTE", "SCRAPER_HOST")
 MAX_BODY = 1 << 20
 LOCAL = r"(localhost|127\.0\.0\.1|\[::1\])"
 HOST_OK = re.compile(rf"^{LOCAL}(:\d{{1,5}})?$", re.I)
@@ -374,19 +374,8 @@ progress {{ display: block; width: 100%; max-width: 200px; height: 6px; margin-t
   td {{ padding: 2px 0; border: 0; }} td.when {{ font-size: .8rem; }} td .row {{ margin-top: 8px; }} }}
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
 </style></head><body><main>
-<header class="top"><h1>Google Maps Scraper Kit</h1>
+<header class="top"><h1>Google Maps Scraper Engine</h1>
 <nav><span class="mono">v{version}</span><a href="/api/docs">API docs</a></nav></header>
-<div class="update" id="update" role="status" hidden><b>Kit v<span id="up-v"></span> is out</b> (this copy is v{version}).
-  <a id="up-link" href="{repo}/releases/latest" target="_blank" rel="noopener">What changed</a> &middot;
-  update with <code>bash scripts/update.sh</code>, or <code>docker compose up -d --build</code> in Docker.</div>
-<div class="stars"><a class="gh" href="{repo}" target="_blank" rel="noopener"><span class="star"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6L2.5 9.3l6.6-.8z"/></svg></span>Star on GitHub</a>
-  <span>Useful? A star helps other people find this free kit.</span></div>
-<aside class="sponsors" id="sponsors" aria-label="Sponsors"><button type="button" class="sp-close" id="sp-close"
-  aria-label="Hide sponsors">&times;</button>
-  <div class="sp-head" id="sp-head" hidden>Supported by</div><div class="sp-grid" id="sp-grid" hidden></div>
-  <p class="sp-ask"><span>Support the upkeep of this free, open-source kit.</span>
-    <a class="gh" href="https://github.com/sponsors/Mahanaicoach" target="_blank" rel="noopener"><span class="heart"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 2.9 5 6.6 5c2.1 0 3.5 1.2 5.4 3.2C13.9 6.2 15.3 5 17.4 5 21.1 5 23 8.6 21.6 11.8 19.5 16.4 12 21 12 21z"/></svg></span>Sponsor on GitHub</a></p>
-</aside>
 <section aria-labelledby="h-new"><h2 id="h-new">New search</h2>
 <form id="f">
   <div class="ww">
@@ -713,6 +702,16 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Cache-Control", "no-store")
+
+        # CORS support for server and external CRM integration
+        origin = self.headers.get("Origin")
+        allow_remote = getattr(getattr(self, "server", None), "allow_remote", False) or os.environ.get("SCRAPER_ALLOW_REMOTE", "0").lower() in ("1", "true", "yes")
+        if allow_remote or origin:
+            self.send_header("Access-Control-Allow-Origin", origin if origin else "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS, HEAD")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key, Authorization, Accept")
+            self.send_header("Access-Control-Max-Age", "86400")
+
         for k, v in headers:
             self.send_header(k, v)
         if self.close_connection:  # tell the client too, so it never reuses the socket
@@ -723,6 +722,17 @@ class Handler(BaseHTTPRequestHandler):
         if code >= 400:
             log(f"{self.command} {self.path.split('?')[0]!r} -> {code}")  # repr: no control characters in the log
 
+    def do_OPTIONS(self):
+        """Handle CORS preflight requests."""
+        origin = self.headers.get("Origin") or "*"
+        headers = (
+            ("Access-Control-Allow-Origin", origin),
+            ("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS, HEAD"),
+            ("Access-Control-Allow-Headers", "Content-Type, X-API-Key, Authorization, Accept"),
+            ("Access-Control-Max-Age", "86400"),
+        )
+        self.reply(204, b"", ctype="text/plain", headers=headers)
+
     def fail(self, code, message):
         if self.command != "GET":  # a refused POST or DELETE may leave its body unread on the socket
             self.close_connection = True
@@ -730,15 +740,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def guard(self):
         """Host (DNS rebinding) and Origin (cross-site posts) checks, plus the optional key."""
+        allow_remote = getattr(self.server, "allow_remote", False) or os.environ.get("SCRAPER_ALLOW_REMOTE", "0").lower() in ("1", "true", "yes")
         host = self.headers.get("Host", "")
-        if not HOST_OK.match(host):
+        if not allow_remote and not HOST_OK.match(host):
             self.close_connection = True
-            self.fail(421, "this engine answers to localhost only")
+            self.fail(421, "this engine answers to localhost only (set SCRAPER_ALLOW_REMOTE=1 in .env for server deployment)")
             return False
         origin = self.headers.get("Origin")  # only this page: a dev server on another local port is another site
-        if origin is not None and not (ORIGIN_OK.match(origin) and origin.split("://", 1)[1].lower() == host.lower()):
+        if not allow_remote and origin is not None and not (ORIGIN_OK.match(origin) and origin.split("://", 1)[1].lower() == host.lower()):
             self.close_connection = True
-            self.fail(403, "requests from other websites are refused")
+            self.fail(403, "requests from other websites are refused (set SCRAPER_ALLOW_REMOTE=1 in .env for server deployment)")
             return False
         key, path = self.server.api_key, self.path.split("?")[0]
         if key and path not in ("/", "/api/docs", "/api/openapi.json") and not hmac.compare_digest(
@@ -811,10 +822,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/":
             nonce = secrets.token_urlsafe(16)
             csp = (f"default-src 'none'; script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'; "
-                   "connect-src 'self' https://raw.githubusercontent.com https://api.github.com; img-src 'self' data:; "
+                   "connect-src 'self' data:; img-src 'self' data:; "
                    "form-action 'self'; base-uri 'none'; "
                    "frame-ancestors 'none'")
-            page = PAGE.format(nonce=nonce, version=VERSION, repo=REPO, sponsors=SPONSORS, releases=RELEASES, types=TYPES_JS,
+            page = PAGE.format(nonce=nonce, version=VERSION, repo=REPO, sponsors="", releases="", types=TYPES_JS,
                                categories=CATEGORIES).encode()
             return self.reply(200, page, "text/html; charset=utf-8", [("Content-Security-Policy", csp)])
         self.fail(404, "not found")
@@ -904,7 +915,7 @@ def in_container():
     return os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
 
 
-def make_servers(port, store, worker, api_key="", host="127.0.0.1"):
+def make_servers(port, store, worker, api_key="", host="127.0.0.1", allow_remote=False):
     """The server on host:port. On 127.0.0.1 also one on [::1]:port when this machine has IPv6
     loopback (Windows tries ::1 first for "localhost" and waits ~2 s before falling back)."""
     if port and port_taken(port):
@@ -916,24 +927,26 @@ def make_servers(port, store, worker, api_key="", host="127.0.0.1"):
         except OSError:
             pass
     for s in servers:
-        s.store, s.worker, s.api_key = store, worker, api_key
+        s.store, s.worker, s.api_key, s.allow_remote = store, worker, api_key, allow_remote
     return servers
 
 
 def main():
-    ap = argparse.ArgumentParser(description="The kit's Google Maps engine (local HTTP API and web UI).")
+    ap = argparse.ArgumentParser(description="The kit's Google Maps engine (HTTP API and web UI).")
     ap.add_argument("--port", type=int, help="default: SCRAPER_PORT from the environment or .env, else 8080")
     ap.add_argument("--data", default=os.path.join(browser.HOME, "data"), help="jobs and results folder")
-    ap.add_argument("--host", default="127.0.0.1", choices=("127.0.0.1", "0.0.0.0"),
-                    help="0.0.0.0 is for the Docker image only, where Docker publishes the port on the "
-                         "host's 127.0.0.1 (default: 127.0.0.1)")
+    ap.add_argument("--host", default="127.0.0.1", help="bind host (e.g. 127.0.0.1 or 0.0.0.0 for all interfaces)")
+    ap.add_argument("--allow-remote", action="store_true",
+                    help="allow connections from remote IPs and hostnames (for server / cloud VPS deployment)")
     a = ap.parse_args()
-    if a.host != "127.0.0.1" and not in_container():
-        # On a laptop or server 0.0.0.0 opens the engine to the network: the Host check stops DNS
-        # rebinding from a browser, not a machine that sends "Host: localhost" itself.
-        sys.exit("✗ --host 0.0.0.0 is for the Docker image only. On this machine the engine listens on "
-                 "127.0.0.1, which keeps other machines out.")
+
     env = read_env()
+    allow_remote = a.allow_remote or env.get("SCRAPER_ALLOW_REMOTE", "0").lower() in ("1", "true", "yes")
+    target_host = a.host if a.host != "127.0.0.1" else (env.get("SCRAPER_HOST") or "127.0.0.1")
+
+    if target_host != "127.0.0.1" and not in_container() and not allow_remote:
+        sys.exit(f"✗ Binding to '{target_host}' opens the engine to the network. Set SCRAPER_ALLOW_REMOTE=1 in .env or pass --allow-remote.")
+
     try:
         port = a.port or int(env["SCRAPER_PORT"] or 8080)
     except ValueError:
@@ -949,9 +962,9 @@ def main():
     headless = env["SCRAPER_HEADLESS"].strip().lower() not in ("0", "false", "no", "off")
     worker = jobs.Worker(store, log, headless=headless)
     try:
-        servers = make_servers(port, store, worker, env["SCRAPER_API_KEY"], a.host)
+        servers = make_servers(port, store, worker, env["SCRAPER_API_KEY"], target_host, allow_remote=allow_remote)
     except OSError as e:
-        sys.exit(f"✗ Cannot listen on {a.host}:{port}: {e}")
+        sys.exit(f"✗ Cannot listen on {target_host}:{port}: {e}")
     # Only now: an engine that cannot bind (another one runs on this data) must not touch its jobs.
     resumed, failed = store.recover()
     if resumed:
