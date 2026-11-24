@@ -160,16 +160,17 @@ class MinIOStorageService:
     @classmethod
     def _store_local_fallback(cls, data: bytes, object_name: str, content_type: str) -> Dict[str, Any]:
         """Save file locally when MinIO is not running or during local tests."""
-        dest_path = os.path.join(cls._fallback_dir, object_name)
+        safe_name = os.path.normpath(object_name).replace("\\", "/").lstrip("/")
+        dest_path = os.path.join(cls._fallback_dir, safe_name)
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         with open(dest_path, "wb") as f:
             f.write(data)
 
-        local_url = f"http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}/api/v1/storage/files/{object_name}"
+        local_url = f"http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}/api/v1/storage/files/{safe_name}"
         return {
             "storage_provider": "local_fallback",
             "bucket": "local",
-            "object_name": object_name,
+            "object_name": safe_name,
             "url": local_url,
             "local_path": dest_path,
             "content_type": content_type,

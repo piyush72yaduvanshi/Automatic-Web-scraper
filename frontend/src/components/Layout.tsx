@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Search,
@@ -33,12 +33,19 @@ import {
   Cpu,
   Layers,
   Activity,
+  MapPin,
+  Sparkles,
+  Command,
+  ArrowRight,
 } from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navSearch, setNavSearch] = useState('');
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState('');
 
   const navGroups = [
     {
@@ -109,6 +116,38 @@ const Layout = () => {
       }))
       .filter((g) => g.items.length > 0);
   }, [navSearch]);
+
+  // Global shortcut: Ctrl+K / Cmd+K to toggle Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const allNavItems = useMemo(() => {
+    return navGroups.flatMap((g) => g.items.map((i) => ({ ...i, group: g.label })));
+  }, []);
+
+  const paletteResults = useMemo(() => {
+    if (!paletteQuery.trim()) return allNavItems.slice(0, 8);
+    const q = paletteQuery.toLowerCase();
+    return allNavItems.filter(
+      (item) => item.label.toLowerCase().includes(q) || item.group.toLowerCase().includes(q) || item.path.toLowerCase().includes(q)
+    );
+  }, [paletteQuery, allNavItems]);
+
+  const handlePaletteSelect = useCallback((path: string) => {
+    setCommandPaletteOpen(false);
+    setPaletteQuery('');
+    navigate(path);
+  }, [navigate]);
 
   // Determine current active section title
   const currentSection = useMemo(() => {
@@ -261,6 +300,14 @@ const Layout = () => {
                 READY
               </span>
             </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-400" /> Local Maps Engine
+              </span>
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                100% FREE
+              </span>
+            </div>
           </div>
         </div>
       </aside>
@@ -288,6 +335,25 @@ const Layout = () => {
 
           {/* Quick Header Actions */}
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-400 hover:border-slate-700 hover:text-slate-200 transition shadow-inner"
+              title="Open Global Command Palette (Ctrl + K)"
+            >
+              <Search className="w-3.5 h-3.5 text-slate-500" />
+              <span>Command Palette</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-800 rounded text-slate-400 border border-slate-700 font-mono font-medium">
+                Ctrl K
+              </kbd>
+            </button>
+            <Link
+              to="/integrations"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full border border-emerald-500/20 transition-all"
+              title="PostgreSQL, Redis, MinIO & Maps Engine Operational"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="hidden sm:inline font-semibold">Systems Live</span>
+            </Link>
             <Link
               to="/discovery"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 rounded-lg shadow-sm shadow-indigo-500/25 transition-all"
@@ -317,6 +383,81 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Command Palette Modal (Ctrl + K) */}
+      {commandPaletteOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity"
+            onClick={() => setCommandPaletteOpen(false)}
+          />
+          <div className="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-indigo-950/60 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
+            {/* Input Header */}
+            <div className="flex items-center px-4 py-3.5 border-b border-slate-800 bg-slate-900/90">
+              <Command className="w-4 h-4 text-indigo-400 mr-2.5 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={paletteQuery}
+                onChange={(e) => setPaletteQuery(e.target.value)}
+                placeholder="Jump to views, tools, or type a command... (e.g. Discovery, RAG, Leads)"
+                className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+              />
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-800 rounded text-slate-400 border border-slate-700 font-mono">
+                ESC
+              </kbd>
+            </div>
+
+            {/* Quick Suggestions / Filtered Results */}
+            <div className="max-h-80 overflow-y-auto p-2 divide-y divide-slate-800/40">
+              {paletteResults.length > 0 ? (
+                <div className="space-y-1">
+                  {paletteResults.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => handlePaletteSelect(item.path)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-indigo-600/20 hover:border-indigo-500/30 border border-transparent transition-all group"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="p-1.5 rounded-lg bg-slate-800 group-hover:bg-indigo-600/30 text-slate-400 group-hover:text-indigo-400 transition-colors">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-200 group-hover:text-white">
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] text-slate-500 ml-2">
+                              {item.group}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-500 group-hover:text-indigo-300 text-[11px]">
+                          <span>Jump</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-slate-500 text-xs">
+                  No matching command or view found for "{paletteQuery}"
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-indigo-400" /> AI Sales &amp; CRM OS v2.5
+              </span>
+              <span>Navigation • Fast Switch</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

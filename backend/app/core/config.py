@@ -214,9 +214,10 @@ class Settings(BaseSettings):
         default=["localhost", "127.0.0.1", "0.0.0.0"]
     )
 
-    # Logging
+    # Logging & Monitoring
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
+    SENTRY_DSN: Optional[str] = None
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

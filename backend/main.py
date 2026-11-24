@@ -19,6 +19,11 @@ from app.core.rate_limiter import limiter
 from app.core.security import SecurityHeadersMiddleware
 from app.core.monitoring import initialize_sentry
 
+# Configure structured logging level on root logger
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 
@@ -114,8 +119,12 @@ async def add_request_id(request: Request, call_next):
     response.headers["X-Request-ID"] = request_id
     return response
 
-# Prometheus metrics (temporarily disabled due to dependency conflict)
-# Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+# Prometheus metrics for observability
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+except Exception as e:
+    logger.warning(f"Prometheus Instrumentator init notice: {e}")
 
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)

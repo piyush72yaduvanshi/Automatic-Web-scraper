@@ -97,24 +97,12 @@ def test_sentry_initialization():
 def test_sentry_initialization_with_dsn():
     """Test Sentry initializes when DSN is provided."""
     with patch('sentry_sdk.init') as mock_init:
-        # Import fresh to get the function
         import app.core.monitoring as monitoring
-        
-        # Patch getattr to return our test DSN
-        original_getattr = getattr
-        def mock_getattr(obj, name, default=None):
-            if name == 'SENTRY_DSN':
-                return "https://test@sentry.io/123"
-            elif name == 'APP_ENV':
-                return "development"
-            return original_getattr(obj, name, default)
-        
-        with patch('builtins.getattr', side_effect=mock_getattr):
+        with patch.object(monitoring.settings, 'SENTRY_DSN', "https://test@sentry.io/123"), \
+             patch.object(monitoring.settings, 'APP_ENV', "development"):
             result = monitoring.initialize_sentry()
-            
-            # Since we're patching, just verify the function is callable
-            # The actual behavior depends on settings at runtime
-            assert callable(monitoring.initialize_sentry)
+            assert result is True
+            assert mock_init.called
 
 
 def test_prometheus_instrumentator_configured():

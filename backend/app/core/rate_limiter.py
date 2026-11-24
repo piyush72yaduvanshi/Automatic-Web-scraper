@@ -10,3 +10,4 @@ limiter = Limiter(
     storage_uri="memory://",
     strategy="fixed-window",
 )
+limiter.key_func = get_remote_address

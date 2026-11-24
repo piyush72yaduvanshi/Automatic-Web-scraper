@@ -25,7 +25,9 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+    status: Optional[str] = None
     overall: str
+    database: Optional[str] = None
     postgres: str
     redis: Optional[str] = None
     minio: Optional[str] = None

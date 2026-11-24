@@ -9,6 +9,30 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Register SQLite cross-dialect compilers for PostgreSQL-specific types (JSONB, UUID, Vector)
+# Ensures seamless fallback and test suite compatibility without crashing on SQLite.
+try:
+    from sqlalchemy.ext.compiler import compiles
+    from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+    @compiles(JSONB, "sqlite")
+    def compile_jsonb_sqlite(type_, compiler, **kw):
+        return "TEXT"
+
+    @compiles(UUID, "sqlite")
+    def compile_uuid_sqlite(type_, compiler, **kw):
+        return "CHAR(36)"
+
+    try:
+        from pgvector.sqlalchemy import Vector
+        @compiles(Vector, "sqlite")
+        def compile_vector_sqlite(type_, compiler, **kw):
+            return "TEXT"
+    except ImportError:
+        pass
+except Exception as e:
+    logger.debug(f"Cross-dialect compiler registration notice: {e}")
+
 db_url = str(settings.DATABASE_URL)
 
 # Configure engine arguments safely based on dialect
