@@ -173,6 +173,69 @@ class Client
         ]);
     }
 
+    /**
+     * Send an email directly via custom SMTP with automated 1x1 tracking pixel
+     * and dynamic personalized image injection.
+     */
+    public function sendSmtpEmail(
+        string $toEmail,
+        string $subject,
+        string $bodyHtml,
+        ?string $bodyText = null,
+        ?string $fromEmail = null,
+        ?string $contactId = null,
+        ?string $companyId = null,
+        ?string $personalizedImageUrl = null
+    ): array {
+        return $this->post('/api/v1/email-tracking/send-smtp', [
+            'to_email' => $toEmail,
+            'subject' => $subject,
+            'body_html' => $bodyHtml,
+            'body_text' => $bodyText,
+            'from_email' => $fromEmail,
+            'contact_id' => $contactId,
+            'company_id' => $companyId,
+            'personalized_image_url' => $personalizedImageUrl,
+        ]);
+    }
+
+    /**
+     * Poll IMAP inbox for incoming prospect replies, trigger AI classification,
+     * enforce sequence stop conditions, and dispatch webhooks.
+     */
+    public function pollImapReplies(int $limit = 50): array
+    {
+        return $this->post("/api/v1/email-tracking/poll-replies?limit={$limit}", []);
+    }
+
+    /**
+     * Get aggregated email tracking and outreach metrics (open rates, reply rates).
+     */
+    public function getEmailTrackingStats(): array
+    {
+        return $this->get('/api/v1/email-tracking/stats');
+    }
+
+    /**
+     * Get 1x1 transparent tracking pixel URL for an email token.
+     */
+    public function getTrackingPixelUrl(string $token): string
+    {
+        return rtrim($this->baseUrl, '/') . "/api/v1/email-tracking/open/{$token}.png";
+    }
+
+    /**
+     * Get personalized image tracking URL.
+     */
+    public function getPersonalizedImageUrl(string $assetId, ?string $token = null): string
+    {
+        $url = rtrim($this->baseUrl, '/') . "/api/v1/email-tracking/image/{$assetId}";
+        if ($token) {
+            $url .= "?token=" . urlencode($token);
+        }
+        return $url;
+    }
+
     // ==========================================
     // 5. WEBHOOK MANAGEMENT
     // ==========================================

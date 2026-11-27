@@ -283,6 +283,11 @@ class Email(Base):
     company_id = Column(GUID(), ForeignKey("companies.id", ondelete="CASCADE"), nullable=True, index=True)
     deal_id = Column(GUID(), ForeignKey("deals.id", ondelete="SET NULL"), nullable=True, index=True)
     subject = Column(String(500), nullable=True)
+    to_email = Column(String(255), nullable=True, index=True)
+    from_email = Column(String(255), nullable=True)
+    sent_message_id = Column(String(255), nullable=True, index=True)
+    tracking_token = Column(String(100), nullable=True, unique=True, index=True)
+    open_count = Column(Integer, default=0)
     body_text = Column(Text, nullable=True)
     body_html = Column(Text, nullable=True)
     direction = Column(String(20), nullable=False, index=True)  # INBOUND, OUTBOUND

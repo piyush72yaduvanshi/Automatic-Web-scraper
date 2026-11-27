@@ -30,6 +30,7 @@ from app.api.v1 import (
     social_leads,
     automation,
     webhooks,
+    email_tracking,
 )
 
 api_router = APIRouter()
@@ -62,4 +63,5 @@ api_router.include_router(storage.router)
 api_router.include_router(social_leads.router, prefix="/social-leads", tags=["social-leads"])
 api_router.include_router(automation.router)
 api_router.include_router(webhooks.router)
+api_router.include_router(email_tracking.router)
 

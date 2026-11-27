@@ -1,8 +1,3 @@
-/**
- * AI Sales CRM OS — Official JavaScript / Node.js SDK
- * Works with Node.js 16+, Browsers, Next.js, Express, and Serverless.
- */
-
 const crypto = require('crypto');
 
 class AiSalesCrmError extends Error {
@@ -15,12 +10,6 @@ class AiSalesCrmError extends Error {
 }
 
 class AiSalesCrm {
-  /**
-   * @param {Object} options
-   * @param {string} [options.baseUrl='http://localhost:8000']
-   * @param {string} [options.apiKey=null]
-   * @param {number} [options.timeout=30000]
-   */
   constructor({ baseUrl = 'http://localhost:8000', apiKey = null, timeout = 30000 } = {}) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.apiKey = apiKey;

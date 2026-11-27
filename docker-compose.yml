@@ -57,7 +57,7 @@ services:
 
   # MinIO High-Performance S3-Compatible Object Storage for Images, Creatives, and Collateral
   minio:
-    image: minio/minio:RELEASE.2024-03-05T04-48-44Z
+    image: minio/minio
     container_name: crm_leads_minio
     command: server /data --console-address ":9001"
     environment:

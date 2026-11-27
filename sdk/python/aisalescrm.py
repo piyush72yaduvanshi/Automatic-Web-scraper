@@ -51,7 +51,7 @@ class AiSalesCrm:
     def enrich_lead(self, lead_id: str) -> Dict[str, Any]:
         return self._post(f"/api/v1/leads/{lead_id}/enrich", {})
 
-    # 4. Multi-Channel Outreach
+    # 4. Multi-Channel Outreach & SMTP Direct Delivery
     def send_outreach_email(self, lead_id: str, subject: str, body: Optional[str] = None) -> Dict[str, Any]:
         return self._post("/api/v1/outreach/send", {
             "lead_id": lead_id,
@@ -59,6 +59,54 @@ class AiSalesCrm:
             "subject": subject,
             "body": body,
         })
+
+    def send_smtp_email(
+        self,
+        to_email: str,
+        subject: str,
+        body_html: str,
+        body_text: Optional[str] = None,
+        from_email: Optional[str] = None,
+        contact_id: Optional[str] = None,
+        company_id: Optional[str] = None,
+        personalized_image_url: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Sends an email directly via SMTP with automated tracking token,
+        transparent 1x1 open pixel, and dynamic personalized banner injection.
+        """
+        return self._post("/api/v1/email-tracking/send-smtp", {
+            "to_email": to_email,
+            "subject": subject,
+            "body_html": body_html,
+            "body_text": body_text,
+            "from_email": from_email,
+            "contact_id": contact_id,
+            "company_id": company_id,
+            "personalized_image_url": personalized_image_url,
+        })
+
+    def poll_imap_replies(self, limit: int = 50) -> Dict[str, Any]:
+        """
+        Polls IMAP mailbox for prospect replies, executes AI intent classification,
+        stops sequence follow-ups, and dispatches webhooks.
+        """
+        return self._post(f"/api/v1/email-tracking/poll-replies?limit={limit}", {})
+
+    def get_email_tracking_stats(self) -> Dict[str, Any]:
+        """Retrieves aggregated outreach open rates, replies, and status."""
+        return self._get("/api/v1/email-tracking/stats")
+
+    def get_tracking_pixel_url(self, tracking_token: str) -> str:
+        """Constructs full URL for 1x1 transparent open pixel."""
+        return f"{self.base_url}/api/v1/email-tracking/open/{tracking_token}.png"
+
+    def get_personalized_image_url(self, asset_id: str, tracking_token: Optional[str] = None) -> str:
+        """Constructs URL for personalized tracked image."""
+        url = f"{self.base_url}/api/v1/email-tracking/image/{asset_id}"
+        if tracking_token:
+            url += f"?token={tracking_token}"
+        return url
 
     # 5. Webhook Management
     def create_webhook_subscription(self, name: str, target_url: str, events: Optional[List[str]] = None, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:

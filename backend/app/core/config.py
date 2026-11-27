@@ -57,30 +57,22 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_database_url(cls, v):
         if not v:
-            return "postgresql+psycopg://postgres:postgres_dev_password_change_in_prod@localhost:5432/crm_leads"
-        s = str(v)
-        if "postgres:postgres@localhost:5432" in s:
-            dev_pwd = os.getenv("POSTGRES_PASSWORD", "postgres_dev_password_change_in_prod")
-            return s.replace("postgres:postgres@localhost:5432", f"postgres:{dev_pwd}@localhost:5432")
-        return s
+            dev_pwd = os.getenv("POSTGRES_PASSWORD", "postgres")
+            return f"postgresql+psycopg://postgres:{dev_pwd}@localhost:5432/crm_leads"
+        return str(v)
 
     # Redis
     REDIS_URL: Union[RedisDsn, str] = Field(
-        default="redis://:redis_dev_password_change_in_prod@localhost:6379/0"
+        default="redis://localhost:6379/0"
     )
-    REDIS_PASSWORD: Optional[str] = "redis_dev_password_change_in_prod"
+    REDIS_PASSWORD: Optional[str] = None
 
     @field_validator("REDIS_URL", mode="before")
     @classmethod
     def assemble_redis_url(cls, v):
         if not v:
-            return "redis://:redis_dev_password_change_in_prod@localhost:6379/0"
-        s = str(v)
-        # If localhost Redis without password, inject container dev password
-        if "localhost:6379" in s and "@" not in s:
-            pwd = os.getenv("REDIS_PASSWORD", "redis_dev_password_change_in_prod")
-            return f"redis://:{pwd}@localhost:6379/0"
-        return s
+            return "redis://localhost:6379/0"
+        return str(v)
 
     # MinIO Object Storage (Images, Creatives, Lead Collateral & Export Storage)
     MINIO_ENDPOINT: str = "localhost:9000"
@@ -144,7 +136,24 @@ class Settings(BaseSettings):
     DEFAULT_AI_PROVIDER: str = "gemini"
     EMBEDDING_PROVIDER: str = "gemini"
 
-    # Communication Providers: Email (Gmail) & WhatsApp
+    # Communication Providers: Email (Gmail, SMTP & IMAP) & WhatsApp
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM_EMAIL: Optional[str] = None
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+
+    IMAP_HOST: Optional[str] = None
+    IMAP_PORT: int = 993
+    IMAP_USER: Optional[str] = None
+    IMAP_PASSWORD: Optional[str] = None
+    IMAP_USE_SSL: bool = True
+    IMAP_MAILBOX: str = "INBOX"
+
+    TRACKING_BASE_URL: str = "http://localhost:8000"
+
     GMAIL_CLIENT_ID: Optional[str] = None
     GMAIL_CLIENT_SECRET: Optional[str] = None
     GMAIL_REFRESH_TOKEN: Optional[str] = None

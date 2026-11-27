@@ -362,6 +362,7 @@ class WebhookService:
         return {
             "success": True,
             "is_new": is_new,
+            "lead_id": str(lead.id),
             "lead": {
                 "id": str(lead.id),
                 "business_name": lead.business_name,
