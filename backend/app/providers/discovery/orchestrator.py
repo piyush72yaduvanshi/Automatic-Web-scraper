@@ -62,10 +62,16 @@ class MultiSourceDiscoveryOrchestrator(BaseDiscoveryProvider):
         """
         provider_name = (preferred_provider or "local_maps").lower()
 
-        # 1. Local Google Maps Scraper Kit (Zero cost, unlimited, direct Google Maps + website pass)
+        # 1. Local Google Maps Scraper Kit (Priority #1: Zero cost, unlimited local scraper)
         if provider_name in ["local_maps", "local_maps_scraper", "local", "google_maps_kit", "google_map_scraper"]:
             if self.local_maps_provider.is_configured():
-                return await self.local_maps_provider.discover_businesses(query, location, radius_km, limit)
+                try:
+                    local_res = await self.local_maps_provider.discover_businesses(query, location, radius_km, limit)
+                    if local_res and local_res.get("businesses"):
+                        return local_res
+                    print("[DiscoveryOrchestrator] Local Maps Scraper returned 0 results. Cascading to paid providers fallback...")
+                except Exception as e:
+                    print(f"[DiscoveryOrchestrator] Local Maps Scraper failed ({e}). Cascading to paid providers fallback...")
             elif not (self.google_places_provider.is_configured() or self.serpapi_provider.is_configured() or self.apify_provider.is_configured()):
                 # When explicitly requested and only provider available, call to surface actionable error
                 return await self.local_maps_provider.discover_businesses(query, location, radius_km, limit)

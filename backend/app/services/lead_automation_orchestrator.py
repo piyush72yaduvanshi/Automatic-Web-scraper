@@ -82,6 +82,24 @@ class LeadAutomationOrchestrator:
             if auto_enroll_enabled and lead.qualification_score and lead.qualification_score >= min_score_outreach and not lead.outreach_enrolled:
                 enroll_result = OutreachAutomationService.auto_enroll_in_sequence(lead_id, db=db)
                 result["steps"]["outreach_enrollment"] = enroll_result
+
+                # Stage initial follow-up step and auto-send if enabled
+                if enroll_result.get("success") and enroll_result.get("sequence_id"):
+                    try:
+                        from app.services.sequence_engine_service import SequenceEngineService
+                        from app.models.outreach import OutreachApproval
+                        SequenceEngineService.evaluate_due_steps(enroll_result["sequence_id"], db)
+
+                        # If auto-approval is enabled, dispatch step 1 email immediately via SMTP
+                        if AutomationSettingsService.is_auto_approve_enabled(db):
+                            pending_approvals = db.query(OutreachApproval).filter(
+                                OutreachApproval.recipient_destination == enroll_result.get("recipient_email"),
+                                OutreachApproval.status == "PENDING"
+                            ).all()
+                            for app_item in pending_approvals:
+                                await OutreachAutomationService.auto_approve_outreach_draft(str(app_item.id), db)
+                    except Exception as seq_err:
+                        logger.warning(f"Error evaluating sequence steps for lead {lead_id}: {seq_err}")
             else:
                 result["steps"]["outreach_enrollment"] = {
                     "skipped": True,

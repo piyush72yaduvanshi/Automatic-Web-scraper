@@ -101,14 +101,19 @@ class IMAPReplyTrackerService:
         and triggers AI reply intelligence + workflow stop actions.
         """
         if not cls.is_configured():
+            # Check if local Docker Mailpit is active for local testing
+            mailpit_res = await cls._poll_mailpit_replies(db=db, limit=limit)
+            if mailpit_res.get("checked_messages", 0) > 0 or mailpit_res.get("matched_replies", 0) > 0:
+                return mailpit_res
+
             logger.info("[IMAPReplyTracker DEV MODE] IMAP is not configured. Running safe simulation check.")
             return {
                 "success": True,
                 "mode": "dev_simulation",
                 "message": "IMAP not configured. No mailbox polled.",
-                "checked_messages": 0,
-                "matched_replies": 0,
-                "replies": [],
+                "checked_messages": mailpit_res.get("checked_messages", 0),
+                "matched_replies": mailpit_res.get("matched_replies", 0),
+                "replies": mailpit_res.get("replies", []),
             }
 
         host = settings.IMAP_HOST
@@ -304,3 +309,131 @@ class IMAPReplyTrackerService:
                     mail.logout()
                 except Exception:
                     pass
+
+    @classmethod
+    async def _poll_mailpit_replies(cls, db: Session, limit: int = 50) -> Dict[str, Any]:
+        """Polls local Mailpit REST API (http://127.0.0.1:8025) for simulated prospect replies."""
+        import httpx
+        mailpit_url = getattr(settings, "MAILPIT_API_URL", "http://127.0.0.1:8025").rstrip("/")
+        matched_results = []
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                res = await client.get(f"{mailpit_url}/api/v1/messages")
+                if res.status_code != 200:
+                    return {"checked_messages": 0, "matched_replies": 0, "replies": []}
+                data = res.json()
+                messages = data.get("messages", []) or []
+                if not messages:
+                    return {"checked_messages": 0, "matched_replies": 0, "replies": []}
+
+                for m in messages[:limit]:
+                    subject = m.get("Subject", "")
+                    sender_email = (m.get("From", {}).get("Address") or "").lower().strip()
+
+                    msg_id = m.get("ID")
+                    det_res = await client.get(f"{mailpit_url}/api/v1/message/{msg_id}")
+                    if det_res.status_code != 200:
+                        continue
+                    det = det_res.json()
+                    headers = det.get("Headers", {}) or {}
+                    in_reply_to_raw = headers.get("In-Reply-To") or headers.get("in-reply-to") or []
+                    in_reply_to = in_reply_to_raw[0] if isinstance(in_reply_to_raw, list) and in_reply_to_raw else str(in_reply_to_raw or "")
+                    ref_raw = headers.get("References") or headers.get("references") or []
+                    references = " ".join(ref_raw) if isinstance(ref_raw, list) else str(ref_raw or "")
+                    body_text = det.get("Text") or det.get("Snippet") or ""
+
+                    is_reply = subject.lower().startswith("re:") or bool(in_reply_to) or bool(references)
+                    if not is_reply:
+                        continue
+
+                    # Correlate with sent emails in database
+                    matched_email = None
+                    if in_reply_to:
+                        matched_email = db.query(Email).filter(Email.sent_message_id == in_reply_to.strip()).first()
+                    if not matched_email and references:
+                        for ref in references.split():
+                            matched_email = db.query(Email).filter(Email.sent_message_id == ref.strip()).first()
+                            if matched_email:
+                                break
+                    if not matched_email and sender_email:
+                        matched_email = db.query(Email).filter(
+                            Email.to_email == sender_email,
+                            Email.direction == "OUTBOUND",
+                            Email.status.in_(["sent", "delivered", "opened", "clicked"]),
+                        ).order_by(Email.sent_at.desc()).first()
+
+                    if matched_email and matched_email.status != "replied":
+                        matched_email.status = "replied"
+                        matched_email.replied_at = datetime.utcnow()
+
+                        conv = None
+                        if matched_email.contact_id:
+                            conv = db.query(Conversation).filter(
+                                Conversation.contact_id == matched_email.contact_id,
+                                Conversation.channel == "EMAIL",
+                            ).first()
+
+                        if not conv:
+                            conv = Conversation(
+                                id=uuid.uuid4(),
+                                channel="EMAIL",
+                                contact_id=matched_email.contact_id,
+                                company_id=matched_email.company_id,
+                                subject=subject or matched_email.subject,
+                                status="ACTIVE",
+                                last_message_at=datetime.utcnow(),
+                            )
+                            db.add(conv)
+                            db.flush()
+
+                        intel_result = await ReplyIntelligenceService.process_incoming_message(
+                            conversation_id=str(conv.id),
+                            sender=sender_email,
+                            body_text=body_text,
+                            db=db,
+                        )
+
+                        activity = Activity(
+                            contact_id=matched_email.contact_id,
+                            company_id=matched_email.company_id,
+                            deal_id=matched_email.deal_id,
+                            activity_type="EMAIL",
+                            title=f"Prospect replied via Mailpit: {subject[:100]}",
+                            description=f"Intent: {intel_result.get('classification')} | Sentiment: {intel_result.get('sentiment')}\n\nSnippet: {body_text[:300]}",
+                            created_at=datetime.utcnow(),
+                        )
+                        db.add(activity)
+                        db.commit()
+
+                        try:
+                            WebhookService.dispatch("email.replied", {
+                                "email_id": str(matched_email.id),
+                                "sender_email": sender_email,
+                                "subject": subject,
+                                "classification": intel_result.get("classification"),
+                                "sentiment": intel_result.get("sentiment"),
+                                "suggested_reply": intel_result.get("suggested_reply"),
+                                "replied_at": matched_email.replied_at.isoformat(),
+                                "source": "mailpit_inbox",
+                            })
+                        except Exception as we:
+                            logger.warning(f"Webhook dispatch error for email.replied: {we}")
+
+                        matched_results.append({
+                            "email_id": str(matched_email.id),
+                            "sender": sender_email,
+                            "subject": subject,
+                            "classification": intel_result.get("classification"),
+                            "sentiment": intel_result.get("sentiment"),
+                        })
+
+                return {
+                    "success": True,
+                    "mode": "mailpit_live",
+                    "checked_messages": len(messages),
+                    "matched_replies": len(matched_results),
+                    "replies": matched_results,
+                }
+        except Exception as e:
+            logger.debug(f"Mailpit check failed or unavailable: {e}")
+            return {"checked_messages": 0, "matched_replies": 0, "replies": []}

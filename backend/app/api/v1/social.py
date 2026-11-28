@@ -144,3 +144,47 @@ async def sync_platform_metrics(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# =============================================================================
+# 6. AUTONOMOUS SOCIAL LISTENING & LEAD EXTRACTION AGENT
+# =============================================================================
+
+@router.post("/listening/run-now")
+async def run_social_listening_scan(
+    data: Dict[str, Any] = Body(default={}),
+    db: Session = Depends(get_db),
+):
+    """
+    On-demand execution of the Autonomous Social Listening Agent across FB, Insta, X, and LinkedIn.
+    Scans posts, comments, buyer intent keywords, extracts leads, and auto-enrolls in outreach!
+    """
+    from app.services.social_listening_agent import SocialListeningAgent
+    platforms = data.get("platforms", ["FACEBOOK", "INSTAGRAM", "X", "LINKEDIN"])
+    keywords = data.get("keywords")
+    limit = data.get("limit_per_platform", 5)
+    days_back = data.get("days_back", 3)
+    try:
+        return await SocialListeningAgent.run_listening_scan(
+            platforms=platforms,
+            keywords=keywords,
+            days_back=days_back,
+            limit_per_platform=limit,
+            db=db,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/listening/status")
+def get_social_listening_status(db: Session = Depends(get_db)):
+    """Retrieve social listening agent stats, leads captured, and supported channels."""
+    from app.models.social_media_lead import SocialMediaLead
+    total_captured = db.query(SocialMediaLead).count()
+    return {
+        "status": "active",
+        "channels": ["FACEBOOK", "INSTAGRAM", "X", "LINKEDIN"],
+        "total_social_leads_captured": total_captured,
+        "default_schedule": "Every 4 Hours + Daily Comprehensive Scan",
+        "auto_outreach_enabled": True,
+    }
+

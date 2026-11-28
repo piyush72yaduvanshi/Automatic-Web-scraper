@@ -33,11 +33,12 @@ class SMTPProvider:
     @classmethod
     def is_configured(cls) -> bool:
         """Returns True if minimum required SMTP credentials are set."""
-        return bool(
-            settings.SMTP_HOST
-            and settings.SMTP_USER
-            and settings.SMTP_PASSWORD
-        )
+        if not settings.SMTP_HOST:
+            return False
+        # Local Mailpit or local development SMTP doesn't require user/password
+        if settings.SMTP_HOST in ("127.0.0.1", "localhost", "mailpit") or settings.SMTP_PORT == 1025:
+            return True
+        return bool(settings.SMTP_USER and settings.SMTP_PASSWORD)
 
     @classmethod
     def generate_tracking_token(cls) -> str:

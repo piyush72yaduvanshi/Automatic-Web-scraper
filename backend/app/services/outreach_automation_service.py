@@ -247,6 +247,7 @@ class OutreachAutomationService:
         return {
             "success": True,
             "lead_id": str(lead.id),
+            "sequence_id": str(sequence.id),
             "sequence_name": sequence.name,
             "campaign_id": str(campaign.id),
             "member_id": str(member.id),

@@ -19,6 +19,11 @@ import {
   Search,
   Image as ImageIcon,
   ExternalLink,
+  Radio,
+  Zap,
+  Filter,
+  Mail,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   SocialAccountItem,
@@ -29,7 +34,53 @@ import {
 } from '../types';
 
 export const ContentSocialView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ACCOUNTS' | 'STUDIO' | 'PREVIEWS' | 'CALENDAR' | 'RULES' | 'ANALYTICS'>('STUDIO');
+  const [activeTab, setActiveTab] = useState<'ACCOUNTS' | 'STUDIO' | 'PREVIEWS' | 'CALENDAR' | 'RULES' | 'ANALYTICS' | 'LISTENING'>('STUDIO');
+  
+  // Social Media Listening State
+  const [listeningStatus, setListeningStatus] = useState<any>(null);
+  const [listeningRunning, setListeningRunning] = useState<boolean>(false);
+  const [listeningPlatforms, setListeningPlatforms] = useState<string[]>(['LINKEDIN', 'X', 'FACEBOOK', 'INSTAGRAM']);
+  const [listeningKeywords, setListeningKeywords] = useState<string>('looking for, need recommendations, recommend a crm, hiring an agency, budget approved');
+  const [listeningScanResult, setListeningScanResult] = useState<any>(null);
+
+  const fetchListeningStatus = async () => {
+    try {
+      const res = await fetch('/api/v1/social/listening/status');
+      if (res.ok) {
+        setListeningStatus(await res.json());
+      }
+    } catch (e) {
+      console.error('Failed to fetch listening status:', e);
+    }
+  };
+
+  const handleRunListeningScan = async () => {
+    setListeningRunning(true);
+    try {
+      const kwList = listeningKeywords.split(',').map((s) => s.trim()).filter(Boolean);
+      const res = await fetch('/api/v1/social/listening/run-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platforms: listeningPlatforms,
+          keywords: kwList.length > 0 ? kwList : undefined,
+          limit_per_platform: 3,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setListeningScanResult(data);
+        setMessage(`Intent scan complete! Extracted ${data.total_leads_extracted} buyer intent leads across platforms.`);
+        fetchListeningStatus();
+      } else {
+        setMessage('Social listening scan failed.');
+      }
+    } catch {
+      setMessage('Error running social listening scan.');
+    } finally {
+      setListeningRunning(false);
+    }
+  };
   
   // Data States
   const [accounts, setAccounts] = useState<SocialAccountItem[]>([]);
@@ -105,6 +156,7 @@ export const ContentSocialView: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    fetchListeningStatus();
   }, []);
 
   // 1. Run AI Topic Research
@@ -429,6 +481,20 @@ export const ContentSocialView: React.FC = () => {
         >
           <BarChart2 className="w-4 h-4" />
           Analytics &amp; Performance
+        </button>
+        <button
+          onClick={() => { setActiveTab('LISTENING'); fetchListeningStatus(); }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+            activeTab === 'LISTENING' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+          }`}
+        >
+          <Radio className="w-4 h-4 text-emerald-400" />
+          Intent Listening &amp; Lead Extractor
+          {listeningStatus?.total_social_leads_captured > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 font-bold rounded-full border border-emerald-500/30">
+              {listeningStatus.total_social_leads_captured}
+            </span>
+          )}
         </button>
       </div>
 
@@ -1213,6 +1279,235 @@ export const ContentSocialView: React.FC = () => {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 7: SOCIAL MEDIA LISTENING & LEAD EXTRACTION AGENT */}
+      {/* ========================================================================= */}
+      {activeTab === 'LISTENING' && (
+        <div className="space-y-6">
+          {/* Top Banner & Status */}
+          <div className="bg-gradient-to-r from-gray-900 via-indigo-950/40 to-gray-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <span className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                    <Radio className="w-6 h-6 animate-pulse" />
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                      Autonomous Social Intent Listening Agent
+                      <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Live Agent Engine
+                      </span>
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Scans Facebook, Instagram, X (Twitter), and LinkedIn for buyer intent signals, extracts prospect contacts, and automatically enrolls them into the CRM &amp; SMTP outreach pipeline.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <a
+                  href="http://localhost:8025"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-800/80 hover:bg-gray-700 text-slate-200 border border-gray-700 rounded-xl text-xs font-semibold shadow-sm transition"
+                >
+                  <Mail className="w-4 h-4 text-emerald-400" />
+                  Open Mailpit Inbox (Port 8025)
+                  <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                </a>
+                <button
+                  onClick={handleRunListeningScan}
+                  disabled={listeningRunning}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md transition"
+                >
+                  {listeningRunning ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Scanning Social Channels...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 text-amber-300" />
+                      Run Instant Intent Scan Now
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl">
+                <span className="text-xs text-gray-400 block mb-1">Total Social Leads Captured</span>
+                <span className="text-2xl font-bold text-white">
+                  {listeningStatus?.total_social_leads_captured || 0}
+                </span>
+                <span className="text-[10px] text-emerald-400 block mt-1">✓ Converted to CRM Business Leads</span>
+              </div>
+              <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl">
+                <span className="text-xs text-gray-400 block mb-1">Monitored Channels</span>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Linkedin className="w-4 h-4 text-blue-400" />
+                  <Twitter className="w-4 h-4 text-sky-400" />
+                  <Facebook className="w-4 h-4 text-blue-500" />
+                  <Instagram className="w-4 h-4 text-pink-400" />
+                  <span className="text-xs text-slate-300 font-semibold ml-1">4 Active Channels</span>
+                </div>
+                <span className="text-[10px] text-gray-400 block mt-1">LinkedIn, X, Facebook, Instagram</span>
+              </div>
+              <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl">
+                <span className="text-xs text-gray-400 block mb-1">Autonomous Schedule</span>
+                <span className="text-sm font-semibold text-indigo-300 block">
+                  Every 4 Hours + Daily Scan
+                </span>
+                <span className="text-[10px] text-gray-400 block mt-1">Background cron &amp; periodic polling</span>
+              </div>
+              <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl">
+                <span className="text-xs text-gray-400 block mb-1">Auto-Outreach Integration</span>
+                <span className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" /> Auto-Enrolled &amp; Sent
+                </span>
+                <span className="text-[10px] text-gray-400 block mt-1">Mailpit SMTP + Pixel Tracking</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Configuration & Intent Filter Bar */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Filter className="w-4 h-4 text-indigo-400" />
+              Target Social Platforms &amp; Buyer Intent Keywords
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-2">Target Platforms</label>
+                <div className="flex flex-wrap gap-2">
+                  {['LINKEDIN', 'X', 'FACEBOOK', 'INSTAGRAM'].map((plat) => {
+                    const isSelected = listeningPlatforms.includes(plat);
+                    return (
+                      <button
+                        key={plat}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            if (listeningPlatforms.length > 1) {
+                              setListeningPlatforms(listeningPlatforms.filter((p) => p !== plat));
+                            }
+                          } else {
+                            setListeningPlatforms([...listeningPlatforms, plat]);
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                          isSelected
+                            ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/50'
+                            : 'bg-gray-800/60 text-gray-400 border-gray-700/60 hover:text-gray-200'
+                        }`}
+                      >
+                        {plat === 'LINKEDIN' && <Linkedin className="w-3.5 h-3.5 text-blue-400" />}
+                        {plat === 'X' && <Twitter className="w-3.5 h-3.5 text-sky-400" />}
+                        {plat === 'FACEBOOK' && <Facebook className="w-3.5 h-3.5 text-blue-500" />}
+                        {plat === 'INSTAGRAM' && <Instagram className="w-3.5 h-3.5 text-pink-400" />}
+                        {plat}
+                        {isSelected && <span className="text-emerald-400">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-2">
+                  Buyer Intent Trigger Phrases (Comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={listeningKeywords}
+                  onChange={(e) => setListeningKeywords(e.target.value)}
+                  placeholder="looking for, need recommendations, recommend a crm, budget approved..."
+                  className="w-full px-3 py-2 bg-gray-950 border border-gray-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Scan Results Display */}
+          {listeningScanResult && (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Latest Scan Results ({listeningScanResult.total_leads_extracted} Leads Extracted &amp; Enrolled)
+                </h3>
+                <span className="text-xs text-gray-400">
+                  Scanned: {new Date(listeningScanResult.executed_at).toLocaleTimeString()}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(listeningScanResult.results_by_platform || {}).map(([plat, leads]: [string, any]) =>
+                  (leads || []).map((l: any, idx: number) => (
+                    <div
+                      key={`${plat}-${idx}`}
+                      className="bg-gray-950/80 border border-gray-800/90 rounded-xl p-4 space-y-3 hover:border-indigo-500/40 transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {plat === 'LINKEDIN' && <Linkedin className="w-4 h-4 text-blue-400" />}
+                          {plat === 'X' && <Twitter className="w-4 h-4 text-sky-400" />}
+                          {plat === 'FACEBOOK' && <Facebook className="w-4 h-4 text-blue-500" />}
+                          {plat === 'INSTAGRAM' && <Instagram className="w-4 h-4 text-pink-400" />}
+                          <span className="font-semibold text-white text-xs">{l.author}</span>
+                          <span className="px-2 py-0.5 text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-md">
+                            {plat}
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">
+                          {l.intent_score}% Intent Score
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-300 bg-gray-900/60 p-2.5 rounded-lg border border-gray-800/80 italic">
+                        "{l.content}"
+                      </p>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-800/80 text-[11px]">
+                        <div className="flex items-center gap-3 text-gray-400">
+                          {l.email && (
+                            <span className="text-indigo-300 font-medium flex items-center gap-1">
+                              <Mail className="w-3 h-3" /> {l.email}
+                            </span>
+                          )}
+                          {l.phone && (
+                            <span className="text-emerald-300 font-medium">
+                              📞 {l.phone}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                            ✓ {l.outreach_status || 'Auto-Enrolled'}
+                          </span>
+                          <a
+                            href="/leads"
+                            className="px-2 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded text-[10px] font-semibold transition"
+                          >
+                            View in CRM
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -22,7 +22,7 @@ class DiscoveryService:
     @staticmethod
     def create_job(db: Session, job_data: DiscoveryJobCreate) -> DiscoveryJob:
         """Create a new discovery job."""
-        provider_name = job_data.preferred_provider or "serpapi"
+        provider_name = job_data.preferred_provider or "local_maps"
         
         job = DiscoveryJob(
             search_query=job_data.query,
@@ -348,6 +348,14 @@ class DiscoveryService:
                         "sources_consulted": enriched.get("sources_consulted", []),
                         "key_people": enriched.get("key_people", []),
                     }
+
+                    # Trigger autonomous qualification & outreach pipeline
+                    try:
+                        from app.services.lead_automation_orchestrator import LeadAutomationOrchestrator
+                        auto_res = await LeadAutomationOrchestrator.process_single_lead(str(lead.id), db)
+                        lead_payload["automation"] = auto_res
+                    except Exception as auto_err:
+                        print(f"Auto-outreach pipeline error for {lead.business_name}: {auto_err}")
 
                     yield sse("lead_ready", {
                         "lead": lead_payload,

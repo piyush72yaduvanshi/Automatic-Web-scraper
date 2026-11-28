@@ -338,7 +338,7 @@ class DiscoveryScheduleService:
                         query=query,
                         location=location,
                         limit=min(remaining_capacity, 20),  # Reasonable batch size
-                        preferred_provider="serpapi",
+                        preferred_provider="local_maps",
                     )
                     
                     # Consume the async generator to execute discovery

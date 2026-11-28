@@ -116,6 +116,24 @@ services:
         reservations:
           memory: 256M
 
+  # Mailpit - Fast Local SMTP & Email Tracking Testing Server
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: crm_leads_mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"  # SMTP port
+      - "127.0.0.1:8025:8025"  # Web UI & REST API port
+    environment:
+      - MP_MAX_MESSAGES=5000
+      - MP_DATABASE=/data/mailpit.db
+      - MP_SMTP_AUTH_ACCEPT_ANY=1
+      - MP_SMTP_AUTH_ALLOW_INSECURE=1
+    volumes:
+      - mailpit_data:/data
+    networks:
+      - crm-lead-network
+
   # Database Migration Service
   migrate:
     build:
@@ -383,3 +401,5 @@ volumes:
     name: crm_leads_minio_data
   maps_scraper_data:
     name: crm_leads_maps_scraper_data
+  mailpit_data:
+    name: crm_leads_mailpit_data

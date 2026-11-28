@@ -120,11 +120,45 @@ class OutreachService:
         # Execute communication
         send_result = {}
         if "EMAIL" in approval.action_type.upper():
-            send_result = await GmailProvider.send_email(
-                to_email=approval.recipient_destination,
-                subject=approval.subject or "Partnership Opportunity",
-                body_content=approval.body_content,
-            )
+            from app.providers.communication.smtp_provider import SMTPProvider
+            from app.models.crm import Email
+
+            token = SMTPProvider.generate_tracking_token()
+            message_id = SMTPProvider.generate_message_id()
+
+            if SMTPProvider.is_configured():
+                send_result = SMTPProvider.send_email(
+                    to_email=approval.recipient_destination,
+                    subject=approval.subject or "Partnership Opportunity",
+                    body_html=approval.body_content,
+                    body_text=approval.body_content,
+                    tracking_token=token,
+                )
+            else:
+                send_result = await GmailProvider.send_email(
+                    to_email=approval.recipient_destination,
+                    subject=approval.subject or "Partnership Opportunity",
+                    body_content=approval.body_content,
+                )
+
+            # Persist Email record for pixel tracking & IMAP correlation
+            try:
+                email_record = Email(
+                    id=uuid.uuid4(),
+                    subject=approval.subject or "Partnership Opportunity",
+                    to_email=approval.recipient_destination,
+                    sent_message_id=message_id,
+                    tracking_token=token,
+                    body_html=approval.body_content,
+                    body_text=approval.body_content,
+                    direction="OUTBOUND",
+                    status="sent",
+                    sent_at=datetime.utcnow(),
+                )
+                db.add(email_record)
+                db.flush()
+            except Exception as e:
+                logger.warning(f"Could not persist Email tracking record: {e}")
         elif "WHATSAPP" in approval.action_type.upper():
             send_result = await WhatsAppProvider.send_message(
                 to_phone=approval.recipient_destination,
